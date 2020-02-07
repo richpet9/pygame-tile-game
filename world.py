@@ -24,16 +24,11 @@ class Map:
                       for x in range(width)]
 
     def draw(self, surface, camera):
-        width_cell = constants.DISPLAY_WIDTH // constants.CELL_WIDTH
-        height_cell = constants.DISPLAY_HEIGHT // constants.CELL_HEIGHT
-
-        for y_tile in range(camera.y_cell, camera.y_cell + height_cell):
-            for x_tile in range(camera.x_cell, camera.x_cell + width_cell):
-                if(x_tile < 0 or x_tile > constants.MAP_WIDTH - 1):
-                    continue
-                if(y_tile < 0 or y_tile > constants.MAP_HEIGHT - 1):
-                    continue
-
+        '''
+        Draw the map cells
+        '''
+        for y_tile in range(camera.y_cell, camera.y_cell + constants.CAMERA_HEIGHT_CELL):
+            for x_tile in range(camera.x_cell, camera.x_cell + constants.CAMERA_WIDTH_CELL):
                 tile_to_draw = self.tiles[x_tile][y_tile]
                 pygame.draw.rect(surface,
                                  TERRAIN_COLORS[tile_to_draw.terrain],
@@ -63,12 +58,18 @@ class Camera:
         self.y_cell = y
 
     def get_rect(self):
+        '''
+        Return the pixel rectangle that this object can see
+        '''
         return pygame.Rect(self.x_cell * constants.CELL_WIDTH,
                            self.y_cell * constants.CELL_WIDTH,
                            constants.CAMERA_WIDTH,
                            constants.CAMERA_HEIGHT)
 
     def set_cells(self, coords):
+        '''
+        Set the X cell and Y cell location of the camera's top left point
+        '''
         self.x_cell = clamp(coords[0], 0,
                             constants.MAP_WIDTH - constants.CAMERA_WIDTH_CELL)
         self.y_cell = clamp(coords[1], 0,
