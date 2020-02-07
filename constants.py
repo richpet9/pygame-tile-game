@@ -1,3 +1,6 @@
+'''
+Constant values throughout the program
+'''
 # SIZES OF THINGS IN PIXELS
 DISPLAY_WIDTH = 736
 DISPLAY_HEIGHT = 800

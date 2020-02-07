@@ -1,5 +1,5 @@
 '''
-    Engine handles initializing, starting, looping, and closing the game
+Engine handles initializing, starting, looping, and closing the game
 '''
 import sys
 import pygame
@@ -12,6 +12,10 @@ constants.DISPLAY_HEIGHT_CELL = constants.DISPLAY_HEIGHT // constants.CELL_HEIGH
 
 
 class GameObject:
+    '''
+    Everything in the game that isn't a cell is a game object
+    '''
+
     def __init__(self, x, y, color):
         self.x_cell = x
         self.y_cell = y
@@ -31,6 +35,10 @@ class GameObject:
 
 
 class GameEngine:
+    '''
+    The driving force of the program, holds the main game loop
+    '''
+
     def __init__(self):
         '''
         Loads all the game modules required

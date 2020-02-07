@@ -1,5 +1,6 @@
 # Python Dev Stuff
 *__pycache__*
+.pylintrc
 
 # VS Code 
 *.vscode*
