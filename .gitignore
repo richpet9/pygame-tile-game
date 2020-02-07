@@ -1,0 +1,8 @@
+# Python Dev Stuff
+*__pycache__*
+
+# VS Code 
+*.vscode*
+
+# Virtual Env., refer to requriements.txt for modules
+*venv*
