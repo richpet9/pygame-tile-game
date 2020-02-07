@@ -3,8 +3,8 @@ World module handles creating a map, map operations, all that stuff
 '''
 import random
 import pygame
+import constants
 from util import clamp
-from constants import DISPLAY_WIDTH, DISPLAY_HEIGHT, CELL_WIDTH, CELL_HEIGHT, MAP_WIDTH, MAP_HEIGHT
 
 TERRAIN_COLORS = {
     "snow": (200, 210, 225),
@@ -24,14 +24,23 @@ class Map:
                       for x in range(width)]
 
     def draw(self, surface, camera):
-        width_cell = DISPLAY_WIDTH // CELL_WIDTH
-        height_cell = DISPLAY_HEIGHT // CELL_HEIGHT
+        width_cell = constants.DISPLAY_WIDTH // constants.CELL_WIDTH
+        height_cell = constants.DISPLAY_HEIGHT // constants.CELL_HEIGHT
 
         for y_tile in range(camera.y_cell, camera.y_cell + height_cell):
             for x_tile in range(camera.x_cell, camera.x_cell + width_cell):
+                if(x_tile < 0 or x_tile > constants.MAP_WIDTH - 1):
+                    continue
+                if(y_tile < 0 or y_tile > constants.MAP_HEIGHT - 1):
+                    continue
+
                 tile_to_draw = self.tiles[x_tile][y_tile]
-                pygame.draw.rect(surface, TERRAIN_COLORS[tile_to_draw.terrain], pygame.Rect(
-                    x_tile * CELL_WIDTH, y_tile * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT))
+                pygame.draw.rect(surface,
+                                 TERRAIN_COLORS[tile_to_draw.terrain],
+                                 pygame.Rect(x_tile * constants.CELL_WIDTH,
+                                             y_tile * constants.CELL_HEIGHT,
+                                             constants.CELL_WIDTH,
+                                             constants.CELL_HEIGHT))
 
 
 class Tile:
@@ -54,13 +63,13 @@ class Camera:
         self.y_cell = y
 
     def get_rect(self):
-        return pygame.Rect(self.x_cell * CELL_WIDTH,
-                           self.y_cell * CELL_WIDTH,
-                           DISPLAY_WIDTH,
-                           DISPLAY_HEIGHT)
+        return pygame.Rect(self.x_cell * constants.CELL_WIDTH,
+                           self.y_cell * constants.CELL_WIDTH,
+                           constants.CAMERA_WIDTH,
+                           constants.CAMERA_HEIGHT)
 
     def set_cells(self, coords):
         self.x_cell = clamp(coords[0], 0,
-                            MAP_WIDTH - (DISPLAY_WIDTH // CELL_WIDTH))
+                            constants.MAP_WIDTH - constants.CAMERA_WIDTH_CELL)
         self.y_cell = clamp(coords[1], 0,
-                            MAP_HEIGHT - (DISPLAY_HEIGHT // CELL_HEIGHT))
+                            constants.MAP_HEIGHT - constants.CAMERA_HEIGHT_CELL)

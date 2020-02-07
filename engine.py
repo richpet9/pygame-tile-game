@@ -7,9 +7,6 @@ import constants
 import world
 import player
 
-constants.DISPLAY_WIDTH_CELL = constants.DISPLAY_WIDTH // constants.CELL_WIDTH
-constants.DISPLAY_HEIGHT_CELL = constants.DISPLAY_HEIGHT // constants.CELL_HEIGHT
-
 
 class GameObject:
     '''
@@ -62,12 +59,11 @@ class GameEngine:
         '''
         Begins the game loop
         '''
-        self.player = player.Player(constants.DISPLAY_WIDTH_CELL // 2,
-                                    constants.DISPLAY_HEIGHT_CELL // 2)
+        self.player = player.Player(constants.CAMERA_WIDTH_CELL // 2,
+                                    constants.CAMERA_HEIGHT_CELL // 2)
         self.objects.append(self.player)
 
-        self.camera.set_cells((self.player.x_cell - (constants.DISPLAY_WIDTH_CELL // 2),
-                               self.player.y_cell - (constants.DISPLAY_HEIGHT_CELL // 2)))
+        self.camera.set_cells((0, 0))
 
         self.main_loop()
 
@@ -88,8 +84,8 @@ class GameEngine:
                 quit_game = True
             if(inputs.get('move_player')):
                 self.player.move(inputs.get('move_player'))
-                self.camera.set_cells((self.player.x_cell - (constants.DISPLAY_WIDTH_CELL // 2),
-                                       self.player.y_cell - (constants.DISPLAY_HEIGHT_CELL // 2)))
+                self.camera.set_cells((self.player.x_cell - (constants.CAMERA_WIDTH_CELL // 2),
+                                       self.player.y_cell - (constants.CAMERA_HEIGHT_CELL // 2)))
 
             # Draw everything
             self.draw()
@@ -120,7 +116,7 @@ class GameEngine:
             game_object.draw(self.surface_map, self.camera)
 
         # Blit the surface map to the main surface
-        self.surface_main.blit(self.surface_map, (0, 0),
+        self.surface_main.blit(self.surface_map, (constants.DISPLAY_WIDTH // 4, 0),
                                self.camera.get_rect())
 
 
