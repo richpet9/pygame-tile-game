@@ -62,5 +62,5 @@ class Camera:
     def set_cells(self, coords):
         self.x_cell = clamp(coords[0], 0,
                             MAP_WIDTH - (DISPLAY_WIDTH // CELL_WIDTH))
-        self.y_cell = clamp(coords[0], 0,
+        self.y_cell = clamp(coords[1], 0,
                             MAP_HEIGHT - (DISPLAY_HEIGHT // CELL_HEIGHT))
