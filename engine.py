@@ -6,6 +6,7 @@ import pygame
 import constants
 import world
 import player
+import hud
 
 
 class GameObject:
@@ -55,6 +56,9 @@ class GameEngine:
         # Create player variable
         self.player = None
 
+        # Create Player Info hud
+        self.player_info = hud.hud_PlayerInfo()
+
         # Create the camera
         self.camera = world.Camera(0, 0)
 
@@ -64,6 +68,9 @@ class GameEngine:
         # Create the map surface
         self.surface_map = pygame.Surface((constants.MAP_WIDTH * constants.CELL_WIDTH,
                                            constants.MAP_HEIGHT * constants.CELL_HEIGHT))
+        # Create the hud surface
+        self.surface_hud = pygame.Surface((constants.DISPLAY_WIDTH,
+                                           constants.DISPLAY_HEIGHT))
         # Create the pygame clock
         self.clock = pygame.time.Clock()
 
@@ -83,6 +90,9 @@ class GameEngine:
                                     constants.CAMERA_HEIGHT_CELL // 2)
         # Add player to objects list
         self.objects.append(self.player)
+
+        # Update HUD
+        self.player_info.update_all_player_info(self.player)
 
         # DEBUG: Set the camera to (0, 0) (temporary)
         self.camera.set_cells((0, 0))
@@ -111,6 +121,9 @@ class GameEngine:
                 self.camera.set_cells((self.player.x_cell - (constants.CAMERA_WIDTH_CELL // 2),
                                        self.player.y_cell - (constants.CAMERA_HEIGHT_CELL // 2)))
 
+            # Update player info hud
+            self.player_info.update_location(self.player.location)
+
             # Draw everything
             self.draw()
 
@@ -132,17 +145,24 @@ class GameEngine:
         # Clear both surfaces with black
         self.surface_main.fill(pygame.Color(0, 0, 0))
         self.surface_map.fill(pygame.Color(0, 0, 0))
+        self.surface_hud.fill(pygame.Color(0, 0, 0, 0))
 
         # Draw the map onto the surface map
         self.map.draw(self.surface_map, self.camera)
+
+        # Draw the player info
+        self.player_info.draw(self.surface_hud)
 
         # Check if every object is visible, and draw the visible ones
         for game_object in self.objects:
             game_object.draw(self.surface_map, self.camera)
 
         # Blit the surface map to the main surface
-        self.surface_main.blit(self.surface_map, (constants.DISPLAY_WIDTH // 4, 0),
+        self.surface_main.blit(self.surface_map, (constants.DISPLAY_WIDTH // 5, 0),
                                self.camera.get_rect())
+
+        # Blit the surface hud to the main surface
+        self.surface_main.blit(self.surface_hud, (0, 0))
 
 
 def handle_input():

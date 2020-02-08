@@ -13,6 +13,10 @@ class Player(GameObject):
     def __init__(self, x, y):
         GameObject.__init__(self, x, y, (255, 200, 175))
 
+        self.name = "Richie"
+        self.health = 100
+        self.location = (x, y)
+
     def move(self, direction):
         '''
         Move the player is the specified direction
@@ -20,3 +24,4 @@ class Player(GameObject):
         '''
         self.x_cell += direction[0]
         self.y_cell += direction[1]
+        self.location = (self.x_cell, self.y_cell)
