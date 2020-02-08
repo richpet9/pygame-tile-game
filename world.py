@@ -4,6 +4,7 @@ World module handles creating a map, map operations, all that stuff
 import random
 import pygame
 import constants
+import graphics
 from util import clamp
 
 TERRAIN_COLORS = {
@@ -23,6 +24,8 @@ class Map:
         self.tiles = [[Tile(x, y) for y in range(height)]
                       for x in range(width)]
 
+        self.sprites = graphics.load_sprites()
+
     def draw(self, surface, camera):
         '''
         Draw the map cells
@@ -30,12 +33,18 @@ class Map:
         for y_tile in range(camera.y_cell, camera.y_cell + constants.CAMERA_HEIGHT_CELL):
             for x_tile in range(camera.x_cell, camera.x_cell + constants.CAMERA_WIDTH_CELL):
                 tile_to_draw = self.tiles[x_tile][y_tile]
-                pygame.draw.rect(surface,
-                                 TERRAIN_COLORS[tile_to_draw.terrain],
-                                 pygame.Rect(x_tile * constants.CELL_WIDTH,
-                                             y_tile * constants.CELL_HEIGHT,
-                                             constants.CELL_WIDTH,
-                                             constants.CELL_HEIGHT))
+                sprite = self.sprites.get(tile_to_draw.terrain)
+
+                if(sprite and sprite.image[0]):
+                    surface.blit(sprite.image[0], (x_tile * constants.CELL_WIDTH,
+                                                   y_tile * constants.CELL_HEIGHT))
+                else:
+                    pygame.draw.rect(surface,
+                                     (255, 0, 255),
+                                     pygame.Rect(x_tile * constants.CELL_WIDTH,
+                                                 y_tile * constants.CELL_HEIGHT,
+                                                 constants.CELL_WIDTH,
+                                                 constants.CELL_HEIGHT))
 
 
 class Tile:
@@ -61,10 +70,10 @@ class Camera:
         '''
         Return the pixel rectangle that this object can see
         '''
-        return pygame.Rect(self.x_cell * constants.CELL_WIDTH,
-                           self.y_cell * constants.CELL_WIDTH,
-                           constants.CAMERA_WIDTH,
-                           constants.CAMERA_HEIGHT)
+        return pygame.Rect((self.x_cell * constants.CELL_WIDTH),
+                           (self.y_cell * constants.CELL_WIDTH),
+                           constants.CAMERA_WIDTH - constants.CELL_WIDTH,
+                           constants.CAMERA_HEIGHT - constants.CELL_HEIGHT)
 
     def set_cells(self, coords):
         '''

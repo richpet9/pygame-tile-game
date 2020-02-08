@@ -158,7 +158,7 @@ class GameEngine:
             game_object.draw(self.surface_map, self.camera)
 
         # Blit the surface map to the main surface
-        self.surface_main.blit(self.surface_map, (constants.DISPLAY_WIDTH // 5, 0),
+        self.surface_main.blit(self.surface_map, (constants.DISPLAY_WIDTH // 5, constants.CELL_HEIGHT // 2),
                                self.camera.get_rect())
 
         # Blit the surface hud to the main surface
