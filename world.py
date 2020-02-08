@@ -5,12 +5,15 @@ import random
 import pygame
 import constants
 import graphics
+import objects
 from util import clamp
 
 TERRAIN_COLORS = {
     "snow": (200, 210, 225),
     "rock": (130, 140, 160)
 }
+
+CURRENT_MAP = None
 
 
 class Map:
@@ -25,6 +28,9 @@ class Map:
                       for x in range(width)]
 
         self.sprites = graphics.load_sprites()
+
+    def place_tree(self, x, y):
+        self.tiles[x][y].contains_obj.append(objects.Tree(x, y))
 
     def draw(self, surface, camera):
         '''
@@ -55,6 +61,7 @@ class Tile:
     def __init__(self, x, y):
         self.x_pos, self.y_pos = x, y
         self.terrain = "snow" if random.random() < 0.5 else "rock"
+        self.contains_obj = []
 
 
 class Camera:

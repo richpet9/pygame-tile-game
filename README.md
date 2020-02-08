@@ -5,7 +5,6 @@
 _in no order_
 
 -   Terrain generation (rocks, mountains, forests, ice sheets)
--   Sprites
 -   Message board
 -   HUD info (health, temp?, hunger?, current turn, time, nearby entities?) (PlayerInfo Object)
 -   Debug tile info

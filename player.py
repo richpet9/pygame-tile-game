@@ -2,7 +2,7 @@
 Module for handling player operations and info
 '''
 
-from engine import GameObject
+from objects import GameObject
 
 
 class Player(GameObject):
@@ -11,7 +11,7 @@ class Player(GameObject):
     '''
 
     def __init__(self, x, y):
-        GameObject.__init__(self, x, y, (255, 200, 175))
+        super(Player, self).__init__(x, y, (255, 200, 175))
 
         self.name = "Richie"
         self.health = 100

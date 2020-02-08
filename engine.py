@@ -7,37 +7,7 @@ import constants
 import world
 import player
 import hud
-
-
-class GameObject:
-    '''
-    Everything in the game that isn't a cell is a game object
-    '''
-
-    def __init__(self, x, y, color):
-        self.x_cell = x
-        self.y_cell = y
-        self.x_pixel = x * constants.CELL_WIDTH
-        self.y_pixel = y * constants.CELL_HEIGHT
-        self.color = color
-
-    def get_rect(self):
-        '''
-        Return the pixel rectangle that this game object resides in
-        '''
-
-        return pygame.Rect(self.x_cell * constants.CELL_WIDTH,
-                           self.y_cell * constants.CELL_HEIGHT,
-                           constants.CELL_WIDTH,
-                           constants.CELL_HEIGHT)
-
-    def draw(self, surface, camera):
-        '''
-        Draw this GameObject on the specified surface
-        '''
-
-        if(camera.get_rect().contains(self.get_rect())):
-            pygame.draw.rect(surface, self.color, self.get_rect())
+import objects
 
 
 class GameEngine:
@@ -90,6 +60,11 @@ class GameEngine:
                                     constants.CAMERA_HEIGHT_CELL // 2)
         # Add player to objects list
         self.objects.append(self.player)
+
+        # Create some trees for debuggin
+        for i in range(10):
+            new_tree = objects.Tree(i + 10, i + 10)
+            self.objects.append(new_tree)
 
         # Update HUD
         self.player_info.update_all_player_info(self.player)
