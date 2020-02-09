@@ -5,7 +5,6 @@ import random
 import pygame
 import constants
 import graphics
-import objects
 from util import clamp
 
 TERRAIN_COLORS = {
@@ -28,9 +27,6 @@ class Map:
                       for x in range(width)]
 
         self.sprites = graphics.load_sprites()
-
-    def place_tree(self, x, y):
-        self.tiles[x][y].contains_obj.append(objects.Tree(x, y))
 
     def draw(self, surface, camera):
         '''
