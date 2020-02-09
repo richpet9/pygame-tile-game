@@ -17,9 +17,9 @@ class _hud:
         self.surface = pygame.surface.Surface((width, height))
         self.surface_width = width
         self.surface_height = height
-        self.font_size = 42
+        self.font_size = 18
         self.font = pygame.font.Font(
-            "resources/Deltoid-sans.ttf", self.font_size, bold=False, italic=False)
+            "resources/8-BIT-WONDER.ttf", self.font_size, bold=False, italic=False)
 
 
 class hud_PlayerInfo(_hud):
