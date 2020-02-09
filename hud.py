@@ -19,7 +19,7 @@ class _hud:
         self.surface = pygame.surface.Surface((width, height))
         self.surface_width = width
         self.surface_height = height
-        self.font_size = 18
+        self.font_size = 16
         self.font = pygame.font.Font(
             "resources/8-BIT-WONDER.ttf", self.font_size, bold=False, italic=False)
 
@@ -71,14 +71,13 @@ class hud_NearbyActions(_hud):
                 False,
                 WHITE)
 
-            y_val = (key * (self.font.get_linesize() +
-                            LINE_SPACING)) + (BORDER_WIDTH * 4)
-            self.surface.blit(
-                rendered_string, (16, y_val))
+            y_val = (key *
+                     (self.font.get_linesize() + LINE_SPACING)) + (BORDER_WIDTH * 4)
+            self.surface.blit(rendered_string, (BORDER_WIDTH * 6, y_val))
 
         # Blit this hud's surface to the main hud surface
-        surface_hud.blit(
-            self.surface, ((DISPLAY_WIDTH * 4) // 5, (DISPLAY_WIDTH // 3)))
+        surface_hud.blit(self.surface,
+                         ((DISPLAY_WIDTH * 4) // 5, (DISPLAY_WIDTH // 3)))
 
 
 class hud_PlayerInfo(_hud):
@@ -120,16 +119,22 @@ class hud_PlayerInfo(_hud):
         '''
         Draw the hud to the specific surface
         '''
+
+        # Clear the hud surface
         self.surface.fill(BLACK)
 
+        # Draw a border
         self.draw_border()
 
-        self.surface.blit(self.name, (16, BORDER_WIDTH * 4))
-        self.surface.blit(self.health, (16,
+        # Blit the name
+        self.surface.blit(self.name, (BORDER_WIDTH * 6, BORDER_WIDTH * 4))
+        # Blit the health bar
+        self.surface.blit(self.health, (BORDER_WIDTH * 6,
                                         self.font.get_linesize() +
                                         LINE_SPACING +
                                         (BORDER_WIDTH * 4)))
-        self.surface.blit(self.location, (16,
+        # Blit the location info
+        self.surface.blit(self.location, (BORDER_WIDTH * 6,
                                           2 * self.font.get_linesize() +
                                           2 * LINE_SPACING +
                                           (BORDER_WIDTH * 4)))

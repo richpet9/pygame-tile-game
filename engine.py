@@ -80,9 +80,11 @@ class GameEngine:
         # Update HUD
         self.player_info.update_all_player_info(self.player)
 
-        self.nearby_actions.add_action({"text": "Example Action"})
-        self.nearby_actions.add_action({"text": "Example Action"})
-        self.nearby_actions.add_action({"text": "Example Action"})
+        self.nearby_actions.add_action({"text": "CUT TREE"})
+        self.nearby_actions.add_action({"text": "CUT TREE"})
+        self.nearby_actions.add_action({"text": "MINE ROCK"})
+        self.nearby_actions.add_action({"text": "COLLECT ROCK"})
+        self.nearby_actions.add_action({"text": "COLLECT WOOD"})
 
         # DEBUG: Set the camera to (0, 0) (temporary)
         self.camera.set_cells((0, 0))
