@@ -4,7 +4,7 @@ World module handles creating a map, map operations, all that stuff
 import random
 import pygame
 import constants
-import graphics
+from graphics import SpriteLoader
 from util import clamp
 
 TERRAIN_COLORS = {
@@ -26,7 +26,7 @@ class Map:
         self.tiles = [[Tile(x, y) for y in range(height)]
                       for x in range(width)]
 
-        self.sprites = graphics.load_sprites()
+        self.sprites = SpriteLoader.sprites
 
     def draw(self, surface, camera):
         '''

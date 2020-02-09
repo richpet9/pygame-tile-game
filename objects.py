@@ -3,7 +3,7 @@ The Objects module contains all the game entities and the root object GameObject
 '''
 
 import pygame
-import graphics
+from graphics import SpriteLoader
 from constants import CELL_WIDTH, CELL_HEIGHT
 
 
@@ -52,4 +52,4 @@ class Tree(GameObject):
     def __init__(self, x, y):
         super(Tree, self).__init__(x, y, color=(0, 255, 0))
 
-        self.sprite = graphics.load_sprites().get('wood')
+        self.sprite = SpriteLoader.sprites.get('wood')

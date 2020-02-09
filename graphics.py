@@ -22,14 +22,13 @@ class Sprite:
             return
 
 
-# TODO: This can be optimzed
-def load_sprites():
-    '''
-    Returns a dictionary of loaded sprites
-    '''
+class SpriteLoader:
+    sprites = {}
 
-    return {
-        "snow": Sprite("resources/sprites/snow.png"),
-        "rock": Sprite("resources/sprites/rock.png"),
-        "wood": Sprite("resources/sprites/wood.png")
-    }
+    @staticmethod
+    def load_sprites():
+        SpriteLoader.sprites = {
+            "snow": Sprite("resources/sprites/snow.png"),
+            "rock": Sprite("resources/sprites/rock.png"),
+            "wood": Sprite("resources/sprites/wood.png")
+        }

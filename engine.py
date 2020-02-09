@@ -4,6 +4,7 @@ Engine handles initializing, starting, looping, and closing the game
 import sys
 import pygame
 import constants
+import graphics
 import world
 import player
 import hud
@@ -22,6 +23,9 @@ class GameEngine:
 
         # Start pygame
         pygame.init()
+
+        # Load Sprites
+        graphics.SpriteLoader.load_sprites()
 
         # Create player variable
         self.player = None
