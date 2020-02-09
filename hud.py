@@ -2,7 +2,7 @@
 The hud module contains the various HUD info screens and surfaces
 '''
 import pygame
-from constants import DISPLAY_WIDTH, DISPLAY_HEIGHT
+from constants import DISPLAY_WIDTH
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -23,14 +23,71 @@ class _hud:
         self.font = pygame.font.Font(
             "resources/8-BIT-WONDER.ttf", self.font_size, bold=False, italic=False)
 
+    def draw_border(self):
+        '''
+        Draw a border around this HUD
+        '''
+        # Draw the border
+        pygame.draw.rect(self.surface,
+                         WHITE,
+                         pygame.Rect(BORDER_WIDTH * 2,
+                                     BORDER_WIDTH * 2,
+                                     self.surface_width - (BORDER_WIDTH * 4),
+                                     self.surface_height - (BORDER_WIDTH * 4)),
+                         BORDER_WIDTH)
+
+
+class hud_NearbyActions(_hud):
+    '''
+    The Nearby Actions menu which shows available movements on the right of the screen
+    '''
+
+    def __init__(self, width, height):
+        super(hud_NearbyActions, self).__init__(width, height)
+
+        self.action_list = []
+
+    def add_action(self, action):
+        '''
+        Add action to action list HUD
+        '''
+        self.action_list.append(action)
+
+    def draw(self, surface_hud):
+        '''
+        Draw the action list HUD
+        '''
+
+        # Clear the surface
+        self.surface.fill(BLACK)
+
+        # Draw a border
+        self.draw_border()
+
+        # Draw every action
+        for key, action in enumerate(self.action_list):
+            rendered_string = self.font.render(
+                str(key) + ' ' + action["text"],
+                False,
+                WHITE)
+
+            y_val = (key * (self.font.get_linesize() +
+                            LINE_SPACING)) + (BORDER_WIDTH * 4)
+            self.surface.blit(
+                rendered_string, (16, y_val))
+
+        # Blit this hud's surface to the main hud surface
+        surface_hud.blit(
+            self.surface, ((DISPLAY_WIDTH * 4) // 5, (DISPLAY_WIDTH // 3)))
+
 
 class hud_PlayerInfo(_hud):
     '''
     The player info hud element
     '''
 
-    def __init__(self):
-        _hud.__init__(self, DISPLAY_WIDTH // 5, DISPLAY_HEIGHT // 3)
+    def __init__(self, width, height):
+        super(hud_PlayerInfo, self).__init__(width, height)
 
         self.name = None
         self.health = None
@@ -40,10 +97,10 @@ class hud_PlayerInfo(_hud):
         '''
         Update & Rerender all of the player info
         '''
-        self.name = self.font.render(player.name, True, WHITE)
+        self.name = self.font.render(player.name, False, WHITE)
         self.health = self.font.render(
             'Health ' + str(player.health),
-            True,
+            False,
             WHITE)
 
         self.update_location(player.location)
@@ -56,7 +113,7 @@ class hud_PlayerInfo(_hud):
         '''
         self.location = self.font.render(
             str(location[0]) + ' ' + str(location[1]),
-            True,
+            False,
             WHITE)
 
     def draw(self, surface_hud):
@@ -65,14 +122,7 @@ class hud_PlayerInfo(_hud):
         '''
         self.surface.fill(BLACK)
 
-        # Draw the border
-        pygame.draw.rect(self.surface,
-                         WHITE,
-                         pygame.Rect(BORDER_WIDTH * 2,
-                                     BORDER_WIDTH * 2,
-                                     self.surface_width - (BORDER_WIDTH * 4),
-                                     self.surface_height - (BORDER_WIDTH * 4)),
-                         BORDER_WIDTH)
+        self.draw_border()
 
         self.surface.blit(self.name, (16, BORDER_WIDTH * 4))
         self.surface.blit(self.health, (16,

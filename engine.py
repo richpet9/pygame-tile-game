@@ -27,7 +27,14 @@ class GameEngine:
         self.player = None
 
         # Create Player Info hud
-        self.player_info = hud.hud_PlayerInfo()
+        self.player_info = hud.hud_PlayerInfo(
+            constants.DISPLAY_WIDTH // 5,
+            constants.DISPLAY_HEIGHT // 3)
+
+        # Near by actions hud
+        self.nearby_actions = hud.hud_NearbyActions(
+            constants.DISPLAY_WIDTH // 5,
+            (constants.DISPLAY_HEIGHT * 2) // 3)
 
         # Create the camera
         self.camera = world.Camera(0, 0)
@@ -68,6 +75,10 @@ class GameEngine:
 
         # Update HUD
         self.player_info.update_all_player_info(self.player)
+
+        self.nearby_actions.add_action({"text": "Example Action"})
+        self.nearby_actions.add_action({"text": "Example Action"})
+        self.nearby_actions.add_action({"text": "Example Action"})
 
         # DEBUG: Set the camera to (0, 0) (temporary)
         self.camera.set_cells((0, 0))
@@ -127,13 +138,16 @@ class GameEngine:
 
         # Draw the player info
         self.player_info.draw(self.surface_hud)
+        self.nearby_actions.draw(self.surface_hud)
 
         # Check if every object is visible, and draw the visible ones
         for game_object in self.objects:
             game_object.draw(self.surface_map, self.camera)
 
         # Blit the surface map to the main surface
-        self.surface_main.blit(self.surface_map, (constants.DISPLAY_WIDTH // 5, constants.CELL_HEIGHT // 2),
+        self.surface_main.blit(self.surface_map,
+                               (constants.DISPLAY_WIDTH // 5,
+                                constants.CELL_HEIGHT // 2),
                                self.camera.get_rect())
 
         # Blit the surface hud to the main surface
