@@ -15,6 +15,7 @@ class GameEngine:
     '''
     The driving force of the program, holds the main game loop
     '''
+    state = "GAMEPLAY"
 
     def __init__(self):
         '''
@@ -61,6 +62,9 @@ class GameEngine:
         # Create the object container
         self.objects = []
 
+        # Active action reference
+        self.active_action = None
+
     def start(self):
         '''
         Begins the game loop
@@ -75,16 +79,11 @@ class GameEngine:
         # Create some trees for debuggin
         for i in range(10):
             new_tree = objects.Tree(i + 10, i + 10)
+            self.map.tiles[i + 10][i + 10].contains_obj = new_tree
             self.objects.append(new_tree)
 
         # Update HUD
         self.player_info.update_all_player_info(self.player)
-
-        self.nearby_actions.add_action({"text": "CUT TREE"})
-        self.nearby_actions.add_action({"text": "CUT TREE"})
-        self.nearby_actions.add_action({"text": "MINE ROCK"})
-        self.nearby_actions.add_action({"text": "COLLECT ROCK"})
-        self.nearby_actions.add_action({"text": "COLLECT WOOD"})
 
         # DEBUG: Set the camera to (0, 0) (temporary)
         self.camera.set_cells((0, 0))
@@ -106,12 +105,51 @@ class GameEngine:
             inputs = handle_input()
 
             # Check inputs
-            if(inputs.get('quit')):
+            if(inputs.get("quit")):
+                # Quit the game
                 quit_game = True
-            if(inputs.get('move_player')):
-                self.player.move(inputs.get('move_player'))
-                self.camera.set_cells((self.player.x_cell - (constants.CAMERA_WIDTH_CELL // 2),
-                                       self.player.y_cell - (constants.CAMERA_HEIGHT_CELL // 2)))
+            if(inputs.get("move_player")):
+                direction = inputs.get("move_player")
+                # Player move command
+                if(GameEngine.state == "GAMEPLAY"):
+                    # Move the player
+                    self.player.move(direction)
+                    # Set the camera on the player
+                    centered_x = self.player.x_cell - \
+                        (constants.CAMERA_WIDTH_CELL // 2)
+                    centered_y = self.player.y_cell - \
+                        (constants.CAMERA_HEIGHT_CELL // 2)
+
+                    self.camera.set_cells((centered_x, centered_y))
+                    # Get new nearby actions
+                    self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
+                                                                              self.map.tiles))
+                else:
+                    # Change active action
+                    self.nearby_actions.move_active_action(
+                        direction)
+            if(inputs.get("toggle_actions")):
+                # Toggle the action select mode
+                GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
+            if(inputs.get("return")):
+                if(GameEngine.state == "ACTIONS"):
+                    if(self.nearby_actions.has_actions()):
+                        active_action = self.nearby_actions.action_list[
+                            self.nearby_actions.active_action]
+                        action_response = active_action.act()
+
+                        if(action_response.get('destroy_self')):
+                            tile = self.map.tiles[active_action.cell[0]
+                                                  ][active_action.cell[1]]
+                            obj_to_destroy = tile.contains_obj
+                            tile.contains_obj = None
+                            self.objects.remove(obj_to_destroy)
+                        if(action_response.get('spawned_objects') is not None):
+                            self.objects.append(
+                                action_response.get('spawned_objects')[0])
+                        # Get new nearby actions
+                        self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
+                                                                                  self.map.tiles))
 
             # Update player info hud
             self.player_info.update_location(self.player.location)
@@ -144,7 +182,7 @@ class GameEngine:
 
         # Draw the player info
         self.player_info.draw(self.surface_hud)
-        self.nearby_actions.draw(self.surface_hud)
+        self.nearby_actions.draw(self.surface_hud, GameEngine.state)
 
         # Check if every object is visible, and draw the visible ones
         for game_object in self.objects:
@@ -174,20 +212,24 @@ def handle_input():
     for event in events_list:
         # If quit is requested, add quit to dictionary
         if(event.type == pygame.QUIT):
-            res['quit'] = True
+            res["quit"] = True
 
         # If a key was pressed
         if(event.type == pygame.KEYDOWN):
             if(event.key == pygame.K_ESCAPE):
-                res['quit'] = True
+                res["quit"] = True
             if(event.key == pygame.K_w):
-                res['move_player'] = (0, -1)
+                res["move_player"] = (0, -1)
             if(event.key == pygame.K_a):
-                res['move_player'] = (-1, 0)
+                res["move_player"] = (-1, 0)
             if(event.key == pygame.K_s):
-                res['move_player'] = (0, 1)
+                res["move_player"] = (0, 1)
             if(event.key == pygame.K_d):
-                res['move_player'] = (1, 0)
+                res["move_player"] = (1, 0)
+            if(event.key == pygame.K_e):
+                res["toggle_actions"] = True
+            if(event.key == pygame.K_RETURN):
+                res["return"] = True
 
     return res
 

@@ -23,12 +23,19 @@ class Sprite:
 
 
 class SpriteLoader:
+    '''
+    Sprite Loader handles keeping all our image references in one place
+    '''
     sprites = {}
 
     @staticmethod
     def load_sprites():
+        '''
+        This static method can be called with .get() to get any image references
+        '''
         SpriteLoader.sprites = {
             "snow": Sprite("resources/sprites/snow.png"),
             "rock": Sprite("resources/sprites/rock.png"),
+            "tree": Sprite("resources/sprites/tree.png"),
             "wood": Sprite("resources/sprites/wood.png")
         }

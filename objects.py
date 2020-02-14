@@ -7,6 +7,37 @@ from graphics import SpriteLoader
 from constants import CELL_WIDTH, CELL_HEIGHT
 
 
+class _action:
+    '''
+    Actions are performed by the player and effect the world
+    '''
+
+    def __init__(self, cell, text="No Action Text", destroy_self=False):
+        self.cell = cell
+        self.text = text
+        self.destroy_self = destroy_self
+
+
+class action_DropObject(_action):
+    '''
+    Drop Object action
+    '''
+
+    def __init__(self, cell, text, obj_to_drop=None, destroy_self=False):
+        super(action_DropObject, self).__init__(cell, text, destroy_self)
+
+        self.obj_to_drop = obj_to_drop
+
+    def act(self):
+        '''
+        This is called when we actually want to do the action
+        '''
+        return {
+            "spawned_objects": [self.obj_to_drop(self.cell[0], self.cell[1])],
+            "destroy_self": self.destroy_self
+        }
+
+
 class GameObject:
     '''
     Everything in the game that isn't a cell is a game object
@@ -52,4 +83,16 @@ class Tree(GameObject):
     def __init__(self, x, y):
         super(Tree, self).__init__(x, y, color=(0, 255, 0))
 
-        self.sprite = SpriteLoader.sprites.get('wood')
+        self.sprite = SpriteLoader.sprites.get('tree')
+        self.actions = [
+            action_DropObject((x, y), "CUT TREE", Wood, destroy_self=True)
+        ]
+
+
+class Wood(GameObject):
+    '''
+    A wood
+    '''
+
+    def __init__(self, x, y):
+        super(Wood, self).__init__(x, y, color=(150, 100, 60))
