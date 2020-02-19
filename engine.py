@@ -11,6 +11,17 @@ import hud
 import objects
 
 
+class GameStats:
+    '''
+    GameStats stores all the current stats for the game / life
+    '''
+
+    def __init__(self):
+        self.turn_count = 0
+        self.time = (12, 00)
+        self.date = (8, "January")
+
+
 class GameEngine:
     '''
     The driving force of the program, holds the main game loop
@@ -30,6 +41,9 @@ class GameEngine:
 
         # Create player variable
         self.player = None
+
+        # Create game stats
+        self.game_stats = GameStats()
 
         # Create Player Info hud
         self.player_info = hud.hud_PlayerInfo(
@@ -65,6 +79,20 @@ class GameEngine:
         # Active action reference
         self.active_action = None
 
+    def increment_turn(self):
+        '''
+        Increment one game turn
+        '''
+        self.game_stats.turn_count += 1
+        new_time = (self.game_stats.time[0], self.game_stats.time[1] + 10)
+        if(new_time[1] > 59):
+            new_time = (new_time[0] + 1, 0)
+        if(new_time[0] > 23):
+            new_time = (0, new_time[1])
+        self.game_stats.time = new_time
+
+        self.player_info.update_all_info(self.player, self.game_stats)
+
     def start(self):
         '''
         Begins the game loop
@@ -82,11 +110,12 @@ class GameEngine:
             self.map.tiles[i + 10][i + 10].contains_obj = new_tree
             self.objects.append(new_tree)
 
-        # Update HUD
-        self.player_info.update_all_player_info(self.player)
-
         # DEBUG: Set the camera to (0, 0) (temporary)
         self.camera.set_cells((0, 0))
+
+        # First time update of player HUD
+        self.player_info.update_all_info(
+            self.player, self.game_stats)
 
         # Start the main loop of the game
         self.main_loop()
@@ -124,6 +153,8 @@ class GameEngine:
                     # Get new nearby actions
                     self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
                                                                               self.map.tiles))
+                    # Update HUD
+                    self.increment_turn()
                 else:
                     # Change active action
                     self.nearby_actions.move_active_action(
@@ -134,10 +165,15 @@ class GameEngine:
             if(inputs.get("return")):
                 if(GameEngine.state == "ACTIONS"):
                     if(self.nearby_actions.has_actions()):
-                        active_action = self.nearby_actions.action_list[
-                            self.nearby_actions.active_action]
+                        # Get the action
+                        active_action = self.nearby_actions.action_list[self.nearby_actions.active_action]
+
+                        # Commit the action
                         action_response = active_action.act()
 
+                        # Check response
+                        if(action_response.get("success")):
+                            self.increment_turn()
                         if(action_response.get('destroy_self')):
                             tile = self.map.tiles[active_action.cell[0]
                                                   ][active_action.cell[1]]
@@ -148,8 +184,8 @@ class GameEngine:
                             self.objects.append(
                                 action_response.get('spawned_objects')[0])
                         # Get new nearby actions
-                        self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
-                                                                                  self.map.tiles))
+                        self.nearby_actions.set_actions(
+                            player.get_nearby_actions(self.player, self.map.tiles))
 
             # Update player info hud
             self.player_info.update_location(self.player.location)

@@ -138,27 +138,73 @@ class hud_PlayerInfo(_hud):
         self.name = None
         self.health = None
         self.location = None
+        self.time = None
+        self.date = None
+        self.turn_count = None
 
-    def update_all_player_info(self, player):
+    def update_all_info(self, player, game_stats):
         '''
         Update & Rerender all of the player info
         '''
-        self.name = self.font.render(player.name, False, WHITE)
-        self.health = self.font.render(
-            'Health ' + str(player.health),
+        self.update_name(player.name)
+        self.update_health(player.health)
+        self.update_location(player.location)
+        self.update_time(game_stats.time)
+        self.update_date(game_stats.date)
+        self.update_turn_count(game_stats.turn_count)
+
+    def update_name(self, name):
+        '''
+        Update only name
+        '''
+        self.name = self.font.render(
+            str(name),
             False,
             WHITE)
 
-        self.update_location(player.location)
+    def update_health(self, health):
+        '''
+        Update only health
+        '''
+        self.health = self.font.render(
+            str(health),
+            False,
+            WHITE)
 
-    # DEBUG: In the future, we'll have separate methods to update each of the info items
-    # I can probably put these all in a dictionary...
     def update_location(self, location):
         '''
         Update only location
         '''
         self.location = self.font.render(
             str(location[0]) + ' ' + str(location[1]),
+            False,
+            WHITE)
+
+    def update_time(self, time):
+        '''
+        Update only time
+        '''
+        self.time = self.font.render(
+            "Time " + str(time[0]) + ' ' + str(time[1]),
+            False,
+            WHITE)
+
+    def update_date(self, date):
+        '''
+        Update only date
+        '''
+        self.date = self.font.render(
+            str(date[0]) + ' ' + str(date[1]),
+            False,
+            WHITE)
+
+    def update_turn_count(self, turn_count):
+        '''
+        Update only turn_count
+        '''
+        # TODO: Create colon character
+        self.turn_count = self.font.render(
+            "Turn " + str(turn_count),
             False,
             WHITE)
 
@@ -185,6 +231,20 @@ class hud_PlayerInfo(_hud):
                                           2 * self.font.get_linesize() +
                                           2 * LINE_SPACING +
                                           (BORDER_WIDTH * 4)))
-
+        # Blit the time info
+        self.surface.blit(self.time, (BORDER_WIDTH * 6,
+                                      3 * self.font.get_linesize() +
+                                      3 * LINE_SPACING +
+                                      (BORDER_WIDTH * 4)))
+        # Blit the date info
+        self.surface.blit(self.date, (BORDER_WIDTH * 6,
+                                      4 * self.font.get_linesize() +
+                                      4 * LINE_SPACING +
+                                      (BORDER_WIDTH * 4)))
+        # Blit the turn info
+        self.surface.blit(self.turn_count, (BORDER_WIDTH * 6,
+                                            5 * self.font.get_linesize() +
+                                            5 * LINE_SPACING +
+                                            (BORDER_WIDTH * 4)))
         # Blit this hud's surface to the main hud surface
         surface_hud.blit(self.surface, (0, 0))

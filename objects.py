@@ -33,6 +33,7 @@ class action_DropObject(_action):
         This is called when we actually want to do the action
         '''
         return {
+            "success": True,
             "spawned_objects": [self.obj_to_drop(self.cell[0], self.cell[1])],
             "destroy_self": self.destroy_self
         }
