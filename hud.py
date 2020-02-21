@@ -2,6 +2,7 @@
 The hud module contains the various HUD info screens and surfaces
 '''
 import pygame
+from util import format_time
 from constants import DISPLAY_WIDTH
 
 WHITE = (255, 255, 255)
@@ -22,9 +23,9 @@ class _hud:
         self.surface = pygame.surface.Surface((width, height))
         self.surface_width = width
         self.surface_height = height
-        self.font_size = 16
+        self.font_size = 32
         self.font = pygame.font.Font(
-            "resources/8-BIT-WONDER.ttf", self.font_size, bold=False, italic=False)
+            "resources/Deltoid-sans.ttf", self.font_size, bold=False, italic=False)
 
     def draw_border(self, active=False):
         '''
@@ -176,7 +177,7 @@ class hud_PlayerInfo(_hud):
         Update only location
         '''
         self.location = self.font.render(
-            str(location[0]) + ' ' + str(location[1]),
+            str(location[0]) + ', ' + str(location[1]),
             False,
             WHITE)
 
@@ -185,7 +186,7 @@ class hud_PlayerInfo(_hud):
         Update only time
         '''
         self.time = self.font.render(
-            "Time " + str(time[0]) + ' ' + str(time[1]),
+            format_time(time),
             False,
             WHITE)
 

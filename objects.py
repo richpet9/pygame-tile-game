@@ -51,6 +51,7 @@ class GameObject:
         self.y_pixel = y * CELL_HEIGHT
         self.color = color
         self.sprite = None
+        self.transparent = True
 
     def get_rect(self):
         '''
@@ -79,15 +80,18 @@ class GameObject:
 
 
 class Tree(GameObject):
-    '''A tree'''
+    '''
+    A tree
+    '''
 
     def __init__(self, x, y):
         super(Tree, self).__init__(x, y, color=(0, 255, 0))
 
-        self.sprite = SpriteLoader.sprites.get('tree')
+        self.sprite = SpriteLoader.sprites.get("tree")
         self.actions = [
             action_DropObject((x, y), "CUT TREE", Wood, destroy_self=True)
         ]
+        self.transparent = False
 
 
 class Wood(GameObject):
@@ -97,3 +101,5 @@ class Wood(GameObject):
 
     def __init__(self, x, y):
         super(Wood, self).__init__(x, y, color=(150, 100, 60))
+
+        self.sprite = SpriteLoader.sprites.get("wood")

@@ -35,18 +35,20 @@ class Map:
         for y_tile in range(camera.y_cell, camera.y_cell + constants.CAMERA_HEIGHT_CELL):
             for x_tile in range(camera.x_cell, camera.x_cell + constants.CAMERA_WIDTH_CELL):
                 tile_to_draw = self.tiles[x_tile][y_tile]
-                sprite = self.sprites.get(tile_to_draw.terrain)
 
-                if(sprite and sprite.image[0]):
-                    surface.blit(sprite.image[0], (x_tile * constants.CELL_WIDTH,
-                                                   y_tile * constants.CELL_HEIGHT))
-                else:
-                    pygame.draw.rect(surface,
-                                     (255, 0, 255),
-                                     pygame.Rect(x_tile * constants.CELL_WIDTH,
-                                                 y_tile * constants.CELL_HEIGHT,
-                                                 constants.CELL_WIDTH,
-                                                 constants.CELL_HEIGHT))
+                if(tile_to_draw.visible):
+                    sprite = self.sprites.get(tile_to_draw.terrain)
+
+                    if(sprite and sprite.image[0]):
+                        surface.blit(sprite.image[0], (x_tile * constants.CELL_WIDTH,
+                                                       y_tile * constants.CELL_HEIGHT))
+                    else:
+                        pygame.draw.rect(surface,
+                                         (255, 0, 255),
+                                         pygame.Rect(x_tile * constants.CELL_WIDTH,
+                                                     y_tile * constants.CELL_HEIGHT,
+                                                     constants.CELL_WIDTH,
+                                                     constants.CELL_HEIGHT))
 
 
 class Tile:
@@ -56,8 +58,19 @@ class Tile:
 
     def __init__(self, x, y):
         self.x_pos, self.y_pos = x, y
-        self.terrain = "snow" if random.random() < 0.5 else "rock"
+        self.terrain = "snow"
         self.contains_obj = None
+        self.transparent = True if self.terrain is "snow" else False
+        self.visible = True
+
+    def check_transparency(self):
+        '''
+        Check if this tile is currently transparent or not
+        '''
+        if(self.contains_obj and self.contains_obj.transparent is False):
+            return False
+
+        return self.transparent
 
 
 class Camera:
@@ -78,7 +91,7 @@ class Camera:
                            constants.CAMERA_WIDTH - constants.CELL_WIDTH,
                            constants.CAMERA_HEIGHT - constants.CELL_HEIGHT)
 
-    def set_cells(self, coords):
+    def set_cell(self, coords):
         '''
         Set the X cell and Y cell location of the camera's top left point
         '''
