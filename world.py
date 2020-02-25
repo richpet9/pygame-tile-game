@@ -34,21 +34,7 @@ class Map:
         '''
         for y_tile in range(camera.y_cell, camera.y_cell + constants.CAMERA_HEIGHT_CELL):
             for x_tile in range(camera.x_cell, camera.x_cell + constants.CAMERA_WIDTH_CELL):
-                tile_to_draw = self.tiles[x_tile][y_tile]
-
-                if(tile_to_draw.visible):
-                    sprite = self.sprites.get(tile_to_draw.terrain)
-
-                    if(sprite and sprite.image[0]):
-                        surface.blit(sprite.image[0], (x_tile * constants.CELL_WIDTH,
-                                                       y_tile * constants.CELL_HEIGHT))
-                    else:
-                        pygame.draw.rect(surface,
-                                         (255, 0, 255),
-                                         pygame.Rect(x_tile * constants.CELL_WIDTH,
-                                                     y_tile * constants.CELL_HEIGHT,
-                                                     constants.CELL_WIDTH,
-                                                     constants.CELL_HEIGHT))
+                self.tiles[x_tile][y_tile].draw(surface)
 
 
 class Tile:
@@ -58,10 +44,21 @@ class Tile:
 
     def __init__(self, x, y):
         self.x_pos, self.y_pos = x, y
-        self.terrain = "snow"
+        self.terrain = "snow" if random.random() < 0.5 else "rock"
         self.contains_obj = None
-        self.transparent = True if self.terrain is "snow" else False
+        self.transparent = True
         self.visible = True
+        self.explored = False
+        self.sprite = SpriteLoader.sprites.get(self.terrain)
+
+    def get_rect(self):
+        '''
+        Return the rectangle pixel area of this tile
+        '''
+        return pygame.Rect(self.x_pos * constants.CELL_WIDTH,
+                           self.y_pos * constants.CELL_HEIGHT,
+                           constants.CELL_WIDTH,
+                           constants.CELL_HEIGHT)
 
     def check_transparency(self):
         '''
@@ -71,6 +68,26 @@ class Tile:
             return False
 
         return self.transparent
+
+    def draw(self, surface):
+        '''
+        Draw this tile on the specified surface
+        '''
+        if(self.visible or self.explored):
+            if(self.sprite and self.sprite.image[0]):
+                # We have a sprite
+                surface.blit(self.sprite.image[0], self.get_rect().topleft)
+            else:
+                # No sprite
+                surface.fill((255, 0, 255), self.get_rect())
+
+        # Check if this tile is not visible and explored
+        if(not self.visible and self.explored):
+            # Make darker
+            overlay = pygame.Surface((self.get_rect().width,
+                                      self.get_rect().height))
+            overlay.fill((0, 0, 0, 205))
+            surface.blit(overlay, self.get_rect().topleft)
 
 
 class Camera:

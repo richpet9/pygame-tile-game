@@ -88,12 +88,16 @@ class GameEngine:
         '''
         # Create an array of transparency
         # TODO: Maybe have an array of transparency for the entire map
-        # stored in memory and updated when map changes?
+        #       stored in memory and updated when map changes?
         tiles = np.ones((constants.CAMERA_WIDTH_CELL,
                          constants.CAMERA_HEIGHT_CELL), dtype=bool)
         # Get every visible tile
-        for y_index, y_tile in enumerate(range(self.camera.y_cell, self.camera.y_cell + constants.CAMERA_HEIGHT_CELL)):
-            for x_index, x_tile in enumerate(range(self.camera.x_cell, self.camera.x_cell + constants.CAMERA_WIDTH_CELL)):
+        for y_index, y_tile in enumerate(range(self.camera.y_cell,
+                                               self.camera.y_cell +
+                                               constants.CAMERA_HEIGHT_CELL)):
+            for x_index, x_tile in enumerate(range(self.camera.x_cell,
+                                                   self.camera.x_cell +
+                                                   constants.CAMERA_WIDTH_CELL)):
                 # Store it's visibility in 2d array
                 tiles[x_index][y_index] = self.map.tiles[x_tile][y_tile].check_transparency()
 
@@ -106,9 +110,16 @@ class GameEngine:
             algorithm=constants.FOV_ALG)
 
         # Go through the returned array and update every tile in that location
-        for y_index, y_tile in enumerate(range(self.camera.y_cell, self.camera.y_cell + constants.CAMERA_HEIGHT_CELL)):
-            for x_index, x_tile in enumerate(range(self.camera.x_cell, self.camera.x_cell + constants.CAMERA_WIDTH_CELL)):
-                self.map.tiles[x_tile][y_tile].visible = res[x_index][y_index]
+        for y_index, y_tile in enumerate(range(self.camera.y_cell,
+                                               self.camera.y_cell +
+                                               constants.CAMERA_HEIGHT_CELL)):
+            for x_index, x_tile in enumerate(range(self.camera.x_cell,
+                                                   self.camera.x_cell +
+                                                   constants.CAMERA_WIDTH_CELL)):
+                tile_to_update = self.map.tiles[x_tile][y_tile]
+                tile_to_update.visible = res[x_index][y_index]
+                tile_to_update.explored = True if res[x_index][y_index] else \
+                    True if tile_to_update.explored else False
 
     def increment_turn(self):
         '''
@@ -207,7 +218,7 @@ class GameEngine:
                 if(GameEngine.state == "ACTIONS"):
                     if(self.nearby_actions.has_actions()):
                         # Get the action
-                        active_action = self.nearby_actions.action_list[self.nearby_actions.active_action]
+                        active_action = self.nearby_actions.get_active_action()
 
                         # Commit the action
                         action_response = active_action.act()

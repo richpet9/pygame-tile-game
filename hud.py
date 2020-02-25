@@ -56,6 +56,12 @@ class hud_NearbyActions(_hud):
         self.active_action = -1
         self.header = self.font.render("Nearby Actions", False, WHITE)
 
+    def get_active_action(self):
+        '''
+        Get the active action from the current index
+        '''
+        return self.action_list[self.active_action]
+
     def move_active_action(self, direction):
         '''
         Move the active selected action by the specified tuple distance
