@@ -3,7 +3,7 @@ The hud module contains the various HUD info screens and surfaces
 '''
 import pygame
 from util import format_time
-from constants import DISPLAY_WIDTH
+from constants import DISPLAY_WIDTH, DISPLAY_HEIGHT
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -27,13 +27,13 @@ class _hud:
         self.font = pygame.font.Font(
             "resources/Deltoid-sans.ttf", self.font_size, bold=False, italic=False)
 
-    def draw_border(self, active=False):
+    def draw_border(self, color=None):
         '''
         Draw a border around this HUD
         '''
 
         # Conditional color
-        color = WHITE if not active else RED
+        color = WHITE if not color else color
         # Draw the border
         pygame.draw.rect(self.surface,
                          color,
@@ -95,7 +95,7 @@ class hud_NearbyActions(_hud):
 
         # Draw a border
         if(gamestate == "ACTIONS"):
-            self.draw_border(active=True)
+            self.draw_border(color=RED)
         else:
             self.draw_border()
 
@@ -125,7 +125,7 @@ class hud_NearbyActions(_hud):
 
         # Blit this hud's surface to the main hud surface
         surface_hud.blit(self.surface,
-                         ((DISPLAY_WIDTH * 4) // 5, (DISPLAY_WIDTH // 3)))
+                         ((DISPLAY_WIDTH * 4) // 5, (DISPLAY_HEIGHT // 3)))
 
 
 class hud_PlayerInfo(_hud):

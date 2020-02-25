@@ -3,14 +3,15 @@ Engine handles initializing, starting, looping, and closing the game
 '''
 import sys
 import pygame
+import numpy as np
+from tcod.map import compute_fov
+
 import constants
 import graphics
 import world
 import player
 import hud
 import objects
-import tcod as libtcodpy
-import numpy as np
 
 
 class GameStats:
@@ -97,12 +98,12 @@ class GameEngine:
                 tiles[x_index][y_index] = self.map.tiles[x_tile][y_tile].check_transparency()
 
         # Pass the array into tcod.map.compute_fov() with player's position
-        res = libtcodpy.map.compute_fov(
+        res = compute_fov(
             tiles,
             (self.player.x_cell - self.camera.x_cell,
              self.player.y_cell - self.camera.y_cell),
-            constants.CAMERA_WIDTH_CELL,
-            algorithm=libtcodpy.FOV_PERMISSIVE_5)
+            radius=constants.FOV_RADIUS,
+            algorithm=constants.FOV_ALG)
 
         # Go through the returned array and update every tile in that location
         for y_index, y_tile in enumerate(range(self.camera.y_cell, self.camera.y_cell + constants.CAMERA_HEIGHT_CELL)):
