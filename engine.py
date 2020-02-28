@@ -172,8 +172,14 @@ class GameEngine:
                 game_object.draw(self.surface_map, self.camera)
 
         # Check if we are in inspect mode, and show the cursor if so
-        # if(GameEngine.state == "INSPECT"):
-        #     self.inspect_cursor.draw(self.surface_main)
+        if(GameEngine.state == "INSPECT"):
+            cell_location = (self.inspection_panel.cursor.location[0] * constants.CELL_WIDTH,
+                             self.inspection_panel.cursor.location[1] * constants.CELL_HEIGHT)
+            rect = pygame.Rect(cell_location[0],
+                               cell_location[1],
+                               constants.CELL_WIDTH,
+                               constants.CELL_HEIGHT)
+            self.surface_map.fill((255, 0, 255), rect)
 
         # Blit the surface map to the main surface
         self.surface_main.blit(self.surface_map,
@@ -198,6 +204,8 @@ class GameEngine:
             if(GameEngine.state == "GAMEPLAY"):
                 # Move the player
                 self.player.move(direction)
+                # Move inspection cursor with player
+                self.inspection_panel.cursor.move(direction)
                 # Set the camera on the player
                 # TODO: Clean this up by creating a "center on" method for camera
                 centered_x = self.player.x_cell - \
@@ -224,7 +232,14 @@ class GameEngine:
             GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
         if(inputs.get("toggle_inspect")):
             # Toggle the inspect mode
-            GameEngine.state = "INSPECT" if GameEngine.state != "INSPECT" else "GAMEPLAY"
+            if(GameEngine.state != "INSPECT"):
+                # Set inspection mode if not in it
+                GameEngine.state = "INSPECT"
+            else:
+                # Set to gameplay if in inspection mode
+                GameEngine.state = "GAMEPLAY"
+                # Reset the cursor to players location
+                self.inspection_panel.cursor.set_location(self.player.location)
         if(inputs.get("return")):
             if(GameEngine.state == "ACTIONS"):
                 if(self.nearby_actions.has_actions()):
@@ -279,10 +294,7 @@ class GameEngine:
 
         # First time update of player HUD
         self.player_info.update_all_info(self.player, self.game_stats)
-
-        # Update inspection panel info
-        self.inspection_panel.inpsected_tile = self.map.tiles[
-            self.player.location[0]][self.player.location[1]]
+        self.inspection_panel.cursor.set_location(self.player.location)
 
         # First time fov compute
         self.update_fov()
@@ -309,6 +321,10 @@ class GameEngine:
             # Update player info hud
             # TODO: This line only needs to happen when we move
             self.player_info.update_location(self.player.location)
+            # Update inspection panel info
+            self.inspection_panel.inpsected_tile = self.map.tiles[
+                self.inspection_panel.cursor.location[0]][
+                self.inspection_panel.cursor.location[1]]
 
             # Draw everything
             self.draw()

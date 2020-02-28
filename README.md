@@ -16,3 +16,4 @@ _in no order_
 -   Inspection board
 -   Inspection Mode
 -   Resolve TODOs
+-   Event management for inputs

@@ -50,11 +50,35 @@ class hud_InspectionPanel(_hud):
     Controls a cursor that moves around the map when in inspect mode
     '''
 
+    class Cursor:
+        '''
+        This cursor is only visible in inspection mode, and is moved around instead of the player
+        '''
+
+        def __init__(self):
+            self.location = (0, 0)
+
+        def set_location(self, location):
+            '''
+            Set the location of the cursor
+            '''
+            self.location = location
+
+        def move(self, direction):
+            '''
+            Move the cursor
+            '''
+            self.location = (
+                self.location[0] + direction[0], self.location[1] + direction[1])
+
     def __init__(self, width, height):
         super(hud_InspectionPanel, self).__init__(width, height)
 
         # The currently inspected tile
         self.inpsected_tile = None
+
+        # The cursor of the inspection mode
+        self.cursor = self.Cursor()
 
     def draw(self, surface_hud):
         '''
@@ -67,23 +91,24 @@ class hud_InspectionPanel(_hud):
         # Draw a border
         self.draw_border()
 
-        # Draw the current tile info
-        if(self.inpsected_tile):
+        # Draw the current tile info if we know of the tile
+        if(self.inpsected_tile and self.inpsected_tile.explored):
             # Render terrain string
             tile_terrain = self.font.render(
                 "Terrain: " + self.inpsected_tile.terrain, True, WHITE)
             # Blit terrain string
             self.surface.blit(tile_terrain, (BORDER_WIDTH + 10, BORDER_WIDTH))
 
-            # Check if there is an object on this tile
-            if(self.inpsected_tile.contains_obj):
+            # Check if there is an object on this tile and we can see it
+            if(self.inpsected_tile.contains_obj and self.inpsected_tile.visible):
                 # Render object string
                 tile_object = self.font.render(
-                    "Object: " + self.inpsected_tile.contains_obj, True, WHITE)
+                    "Object: " + self.inpsected_tile.contains_obj.name, True, WHITE)
                 # Blit object string
                 self.surface.blit(
-                    tile_object, (BORDER_WIDTH + 10, BORDER_WIDTH))
+                    tile_object, (BORDER_WIDTH + 10, BORDER_WIDTH + self.font.get_linesize() + LINE_SPACING))
 
+        # Blit onto the main hud surface
         surface_hud.blit(self.surface,
                          ((DISPLAY_WIDTH * 4) // 5, 0))
 
