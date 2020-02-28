@@ -33,6 +33,7 @@ class action_DropObject(_action):
         This is called when we actually want to do the action
         '''
         return {
+            "location": self.cell,
             "success": True,
             "spawned_objects": [self.obj_to_drop(self.cell[0], self.cell[1])],
             "destroy_self": self.destroy_self
@@ -89,10 +90,10 @@ class Tree(GameObject):
         super(Tree, self).__init__(x, y, color=(0, 255, 0), name="Tree")
 
         self.sprite = SpriteLoader.sprites.get("tree")
+        self.transparent = False
         self.actions = [
             action_DropObject((x, y), "CUT TREE", Wood, destroy_self=True)
         ]
-        self.transparent = False
 
 
 class Wood(GameObject):
@@ -104,3 +105,5 @@ class Wood(GameObject):
         super(Wood, self).__init__(x, y, color=(150, 100, 60), name="Wood")
 
         self.sprite = SpriteLoader.sprites.get("wood")
+        self.transparent = True
+        self.actions = []

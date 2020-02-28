@@ -89,6 +89,24 @@ class GameEngine:
         # Active action reference
         self.active_action = None
 
+    def handle_object_response(self, response):
+        # Get the location
+        location = response.get("location")
+        tile = self.map.tiles[location[0]][location[1]]
+
+        # Check response
+        if(response.get("success")):
+            # Check for destroy self flag
+            if(response.get("destroy_self")):
+                obj_to_destroy = tile.contains_obj
+                tile.contains_obj = None
+                self.objects.remove(obj_to_destroy)
+
+            # Check for spawned objects flag
+            for obj in response.get("spawned_objects"):
+                self.objects.append(obj)
+                self.map.tiles[obj.x_cell][obj.y_cell].contains_obj = obj
+
     def update_fov(self):
         '''
         Update the player's field of view
@@ -247,30 +265,15 @@ class GameEngine:
                     active_action = self.nearby_actions.get_active_action()
 
                     # Commit the action
-                    action_response = active_action.act()
+                    self.handle_object_response(active_action.act())
 
-                    # Check response
-                    if(action_response.get("success")):
-                        # Check for destroy self flag
-                        if(action_response.get("destroy_self")):
-                            tile = self.map.tiles[active_action.cell[0]
-                                                  ][active_action.cell[1]]
-                            obj_to_destroy = tile.contains_obj
-                            tile.contains_obj = None
-                            self.objects.remove(obj_to_destroy)
+                    # Update FOV
+                    self.update_fov()
+                    self.increment_turn()
 
-                        # Check for spawned objects flag
-                        if(action_response.get('spawned_objects') is not None):
-                            self.objects.append(
-                                action_response.get('spawned_objects')[0])
-
-                        # Update FOV
-                        self.update_fov()
-                        self.increment_turn()
-
-                        # Get new nearby actions
-                        self.nearby_actions.set_actions(
-                            player.get_nearby_actions(self.player, self.map.tiles))
+                    # Get new nearby actions
+                    self.nearby_actions.set_actions(
+                        player.get_nearby_actions(self.player, self.map.tiles))
 
     def start(self):
         '''
