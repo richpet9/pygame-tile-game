@@ -190,7 +190,7 @@ class GameEngine:
                 game_object.draw(self.surface_map, self.camera)
 
         # Check if we are in inspect mode, and show the cursor if so
-        if(GameEngine.state == "INSPECT"):
+        if(GameEngine.state == "INSPECT" or GameEngine.state == "ACTIONS"):
             cell_location = (self.inspection_panel.cursor.location[0] * constants.CELL_WIDTH,
                              self.inspection_panel.cursor.location[1] * constants.CELL_HEIGHT)
             rect = pygame.Rect(cell_location[0],
@@ -216,6 +216,7 @@ class GameEngine:
         if(inputs.get("quit")):
             # Quit the game
             self.quit_game = True
+
         if(inputs.get("move_player")):
             direction = inputs.get("move_player")
             # Player move command
@@ -242,12 +243,29 @@ class GameEngine:
             elif(GameEngine.state == "ACTIONS"):
                 # Change active action
                 self.nearby_actions.move_active_action(direction)
+
+                if(self.nearby_actions.has_actions()):
+                    # Move the inspection cursor to the current action
+                    self.inspection_panel.cursor.set_location(
+                        self.nearby_actions.get_active_action().cell)
             elif(GameEngine.state == "INSPECT"):
                 # Move the inspect cursor
                 self.inspection_panel.cursor.move(direction)
+
         if(inputs.get("toggle_actions")):
             # Toggle the action select mode
-            GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
+            if(GameEngine.state != "ACTIONS"):
+                GameEngine.state = "ACTIONS"
+                if(self.nearby_actions.has_actions()):
+                    # Move the inspection cursor to the current action
+                    self.inspection_panel.cursor.set_location(
+                        self.nearby_actions.get_active_action().cell)
+            else:
+                # Toggle off action menu
+                GameEngine.state = "GAMEPLAY"
+                # Reset the cursor to players location
+                self.inspection_panel.cursor.set_location(self.player.location)
+
         if(inputs.get("toggle_inspect")):
             # Toggle the inspect mode
             if(GameEngine.state != "INSPECT"):
@@ -258,6 +276,7 @@ class GameEngine:
                 GameEngine.state = "GAMEPLAY"
                 # Reset the cursor to players location
                 self.inspection_panel.cursor.set_location(self.player.location)
+
         if(inputs.get("return")):
             if(GameEngine.state == "ACTIONS"):
                 if(self.nearby_actions.has_actions()):
@@ -274,6 +293,18 @@ class GameEngine:
                     # Get new nearby actions
                     self.nearby_actions.set_actions(
                         player.get_nearby_actions(self.player, self.map.tiles))
+
+                    # If we have new actions, be sure to move the inspection cursor to it
+                    if(self.nearby_actions.has_actions()):
+                        # Move the inspection cursor to the current action
+                        self.inspection_panel.cursor.set_location(
+                            self.nearby_actions.get_active_action().cell)
+                    else:
+                        # If we don't have more actions, leave action mode
+                        GameEngine.state = "GAMEPLAY"
+                        # Reset the cursor to players location
+                        self.inspection_panel.cursor.set_location(
+                            self.player.location)
 
     def start(self):
         '''

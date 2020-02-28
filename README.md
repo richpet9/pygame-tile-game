@@ -13,7 +13,7 @@ _in no order_
 -   Placing walls / shelter
 -   Pause / Main Menues
 -   State object with render method, each state of the game, menu, gameplay, etc., will have its own draw method
--   Inspection board
--   Inspection Mode
 -   Resolve TODOs
 -   Event management for inputs
+-   Consolidate the usage of x_cell y_cell vs "location" tuples
+-   When navigating actions, show the cursor and move it to the active action
