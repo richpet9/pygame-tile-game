@@ -147,6 +147,43 @@ class GameEngine:
         # Update player info
         self.player_info.update_all_info(self.player, self.game_stats)
 
+    def draw(self):
+        '''
+        Draw all the things in the game
+        '''
+
+        # Clear both surfaces with black
+        self.surface_main.fill(pygame.Color(0, 0, 0))
+        self.surface_map.fill(pygame.Color(0, 0, 0))
+        self.surface_hud.fill(pygame.Color(0, 0, 0, 0))
+
+        # Draw the map onto the surface map
+        self.map.draw(self.surface_map, self.camera)
+
+        # Draw the player info
+        # TODO: Create container for all the HUDs?
+        self.player_info.draw(self.surface_hud)
+        self.nearby_actions.draw(self.surface_hud, GameEngine.state)
+        self.inspection_panel.draw(self.surface_hud)
+
+        # Check if every object is visible, and draw the visible ones
+        for game_object in self.objects:
+            if(self.map.tiles[game_object.x_cell][game_object.y_cell].visible):
+                game_object.draw(self.surface_map, self.camera)
+
+        # Check if we are in inspect mode, and show the cursor if so
+        # if(GameEngine.state == "INSPECT"):
+        #     self.inspect_cursor.draw(self.surface_main)
+
+        # Blit the surface map to the main surface
+        self.surface_main.blit(self.surface_map,
+                               (constants.DISPLAY_WIDTH // 5,
+                                constants.CELL_HEIGHT // 2),
+                               self.camera.get_rect())
+
+        # Blit the surface hud to the main surface
+        self.surface_main.blit(self.surface_hud, (0, 0))
+
     def handle_input(self, inputs):
         '''
         Handle all the inputs
@@ -162,6 +199,7 @@ class GameEngine:
                 # Move the player
                 self.player.move(direction)
                 # Set the camera on the player
+                # TODO: Clean this up by creating a "center on" method for camera
                 centered_x = self.player.x_cell - \
                     (constants.CAMERA_WIDTH_CELL // 2)
                 centered_y = self.player.y_cell - \
@@ -173,16 +211,18 @@ class GameEngine:
                                                                           self.map.tiles))
                 # Update FOV
                 self.update_fov()
-                # Update HUD
+                # Increment turn
                 self.increment_turn()
-            else:
+            elif(GameEngine.state == "ACTIONS"):
                 # Change active action
-                self.nearby_actions.move_active_action(
-                    direction)
+                self.nearby_actions.move_active_action(direction)
+            elif(GameEngine.state == "INSPECT"):
+                # Move the inspect cursor
+                self.inspection_panel.cursor.move(direction)
         if(inputs.get("toggle_actions")):
             # Toggle the action select mode
             GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
-        if(inputs.get("inspect")):
+        if(inputs.get("toggle_inspect")):
             # Toggle the inspect mode
             GameEngine.state = "INSPECT" if GameEngine.state != "INSPECT" else "GAMEPLAY"
         if(inputs.get("return")):
@@ -196,15 +236,19 @@ class GameEngine:
 
                     # Check response
                     if(action_response.get("success")):
+                        # Check for destroy self flag
                         if(action_response.get("destroy_self")):
                             tile = self.map.tiles[active_action.cell[0]
                                                   ][active_action.cell[1]]
                             obj_to_destroy = tile.contains_obj
                             tile.contains_obj = None
                             self.objects.remove(obj_to_destroy)
+
+                        # Check for spawned objects flag
                         if(action_response.get('spawned_objects') is not None):
                             self.objects.append(
                                 action_response.get('spawned_objects')[0])
+
                         # Update FOV
                         self.update_fov()
                         self.increment_turn()
@@ -279,43 +323,6 @@ class GameEngine:
         pygame.quit()
         sys.exit()
 
-    def draw(self):
-        '''
-        Draw all the things in the game
-        '''
-
-        # Clear both surfaces with black
-        self.surface_main.fill(pygame.Color(0, 0, 0))
-        self.surface_map.fill(pygame.Color(0, 0, 0))
-        self.surface_hud.fill(pygame.Color(0, 0, 0, 0))
-
-        # Draw the map onto the surface map
-        self.map.draw(self.surface_map, self.camera)
-
-        # Draw the player info
-        # TODO: Create container for all the HUDs?
-        self.player_info.draw(self.surface_hud)
-        self.nearby_actions.draw(self.surface_hud, GameEngine.state)
-        self.inspection_panel.draw(self.surface_hud)
-
-        # Check if every object is visible, and draw the visible ones
-        for game_object in self.objects:
-            if(self.map.tiles[game_object.x_cell][game_object.y_cell].visible):
-                game_object.draw(self.surface_map, self.camera)
-
-        # Check if we are in inspect mode, and show the cursor if so
-        # if(GameEngine.state == "INSPECT"):
-        #     self.inspect_cursor.draw(self.surface_main)
-
-        # Blit the surface map to the main surface
-        self.surface_main.blit(self.surface_map,
-                               (constants.DISPLAY_WIDTH // 5,
-                                constants.CELL_HEIGHT // 2),
-                               self.camera.get_rect())
-
-        # Blit the surface hud to the main surface
-        self.surface_main.blit(self.surface_hud, (0, 0))
-
 
 def get_inputs():
     '''
@@ -350,7 +357,7 @@ def get_inputs():
             if(event.key == pygame.K_RETURN):
                 res["return"] = True
             if(event.key == pygame.K_i):
-                res["inspect"] = True
+                res["toggle_inspect"] = True
 
     return res
 
