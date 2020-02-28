@@ -35,6 +35,8 @@ class GameEngine:
         '''
         Loads all the game modules required
         '''
+        # Quit flag
+        self.quit_game = False
 
         # Start pygame
         pygame.init()
@@ -118,8 +120,7 @@ class GameEngine:
                                                    constants.CAMERA_WIDTH_CELL)):
                 tile_to_update = self.map.tiles[x_tile][y_tile]
                 tile_to_update.visible = res[x_index][y_index]
-                tile_to_update.explored = True if res[x_index][y_index] else \
-                    True if tile_to_update.explored else False
+                tile_to_update.explored = True if res[x_index][y_index] else tile_to_update.explored
 
     def increment_turn(self):
         '''
@@ -138,7 +139,71 @@ class GameEngine:
             new_time = (0, new_time[1])
         self.game_stats.time = new_time
 
+        # Update player info
         self.player_info.update_all_info(self.player, self.game_stats)
+
+    def handle_input(self, inputs):
+        '''
+        Handle all the inputs
+        '''
+        # Check inputs
+        if(inputs.get("quit")):
+            # Quit the game
+            self.quit_game = True
+        if(inputs.get("move_player")):
+            direction = inputs.get("move_player")
+            # Player move command
+            if(GameEngine.state == "GAMEPLAY"):
+                # Move the player
+                self.player.move(direction)
+                # Set the camera on the player
+                centered_x = self.player.x_cell - \
+                    (constants.CAMERA_WIDTH_CELL // 2)
+                centered_y = self.player.y_cell - \
+                    (constants.CAMERA_HEIGHT_CELL // 2)
+                # Set the camera center cell
+                self.camera.set_cell((centered_x, centered_y))
+                # Get new nearby actions
+                self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
+                                                                          self.map.tiles))
+                # Update FOV
+                self.update_fov()
+                # Update HUD
+                self.increment_turn()
+            else:
+                # Change active action
+                self.nearby_actions.move_active_action(
+                    direction)
+        if(inputs.get("toggle_actions")):
+            # Toggle the action select mode
+            GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
+        if(inputs.get("return")):
+            if(GameEngine.state == "ACTIONS"):
+                if(self.nearby_actions.has_actions()):
+                    # Get the action
+                    active_action = self.nearby_actions.get_active_action()
+
+                    # Commit the action
+                    action_response = active_action.act()
+
+                    # Check response
+                    if(action_response.get("success")):
+                        if(action_response.get('recreate')):
+                            tile = self.map.tiles[active_action.cell[0]
+                                                  ][active_action.cell[1]]
+                            obj_to_destroy = tile.contains_obj
+                            tile.contains_obj = None
+                            self.objects.remove(obj_to_destroy)
+                        if(action_response.get('spawned_objects') is not None):
+                            self.objects.append(
+                                action_response.get('spawned_objects')[0])
+                        # Update FOV
+                        self.update_fov()
+                        self.increment_turn()
+
+                        # Get new nearby actions
+                        self.nearby_actions.set_actions(
+                            player.get_nearby_actions(self.player, self.map.tiles))
 
     def start(self):
         '''
@@ -176,71 +241,15 @@ class GameEngine:
         '''
 
         # When this is True we will quit
-        quit_game = False
+        self.quit_game = False
 
         # While we don't want to quit the game
-        while not quit_game:
+        while not self.quit_game:
             # Get inputs
-            inputs = handle_input()
+            inputs = get_inputs()
 
-            # Check inputs
-            if(inputs.get("quit")):
-                # Quit the game
-                quit_game = True
-            if(inputs.get("move_player")):
-                direction = inputs.get("move_player")
-                # Player move command
-                if(GameEngine.state == "GAMEPLAY"):
-                    # Move the player
-                    self.player.move(direction)
-                    # Set the camera on the player
-                    centered_x = self.player.x_cell - \
-                        (constants.CAMERA_WIDTH_CELL // 2)
-                    centered_y = self.player.y_cell - \
-                        (constants.CAMERA_HEIGHT_CELL // 2)
-                    # Set the camera center cell
-                    self.camera.set_cell((centered_x, centered_y))
-                    # Get new nearby actions
-                    self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
-                                                                              self.map.tiles))
-                    # Update FOV
-                    self.update_fov()
-                    # Update HUD
-                    self.increment_turn()
-                else:
-                    # Change active action
-                    self.nearby_actions.move_active_action(
-                        direction)
-            if(inputs.get("toggle_actions")):
-                # Toggle the action select mode
-                GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
-            if(inputs.get("return")):
-                if(GameEngine.state == "ACTIONS"):
-                    if(self.nearby_actions.has_actions()):
-                        # Get the action
-                        active_action = self.nearby_actions.get_active_action()
-
-                        # Commit the action
-                        action_response = active_action.act()
-
-                        # Check response
-                        if(action_response.get("success")):
-                            if(action_response.get('recreate')):
-                                tile = self.map.tiles[active_action.cell[0]
-                                                      ][active_action.cell[1]]
-                                obj_to_destroy = tile.contains_obj
-                                tile.contains_obj = None
-                                self.objects.remove(obj_to_destroy)
-                            if(action_response.get('spawned_objects') is not None):
-                                self.objects.append(
-                                    action_response.get('spawned_objects')[0])
-                            # Update FOV
-                            self.update_fov()
-                            self.increment_turn()
-
-                            # Get new nearby actions
-                            self.nearby_actions.set_actions(
-                                player.get_nearby_actions(self.player, self.map.tiles))
+            # Handle inputs
+            self.handle_input(inputs)
 
             # Update player info hud
             self.player_info.update_location(self.player.location)
@@ -290,7 +299,7 @@ class GameEngine:
         self.surface_main.blit(self.surface_hud, (0, 0))
 
 
-def handle_input():
+def get_inputs():
     '''
     Handle input events
     '''
@@ -322,6 +331,8 @@ def handle_input():
                 res["toggle_actions"] = True
             if(event.key == pygame.K_RETURN):
                 res["return"] = True
+            if(event.key == pygame.K_i):
+                res["inspect"] = True
 
     return res
 
