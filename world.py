@@ -44,7 +44,7 @@ class Tile:
 
     def __init__(self, x, y):
         self.x_pos, self.y_pos = x, y
-        self.terrain = "snow" if random.random() < 0.5 else "rock"
+        self.terrain = "snow" if random.random() < 0.65 else "rock"
         self.contains_obj = None
         self.transparent = True
         self.visible = True

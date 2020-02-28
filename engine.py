@@ -225,7 +225,7 @@ class GameEngine:
 
                         # Check response
                         if(action_response.get("success")):
-                            if(action_response.get('destroy_self')):
+                            if(action_response.get('recreate')):
                                 tile = self.map.tiles[active_action.cell[0]
                                                       ][active_action.cell[1]]
                                 obj_to_destroy = tile.contains_obj
