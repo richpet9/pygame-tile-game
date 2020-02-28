@@ -10,7 +10,7 @@ BLACK = (0, 0, 0)
 RED = (250, 0, 0)
 GRAY = (150, 150, 150)
 
-BORDER_WIDTH = 2
+BORDER_WIDTH = 1
 LINE_SPACING = 4
 
 
@@ -44,13 +44,57 @@ class _hud:
                          BORDER_WIDTH)
 
 
-class hud_NearbyActions(_hud):
+class hud_InspectionPanel(_hud):
+    '''
+    The "inspect" area of the hud which shows what the player is "looking at"
+    Controls a cursor that moves around the map when in inspect mode
+    '''
+
+    def __init__(self, width, height):
+        super(hud_InspectionPanel, self).__init__(width, height)
+
+        # The currently inspected tile
+        self.inpsected_tile = None
+
+    def draw(self, surface_hud):
+        '''
+        Draw the inspection panel
+        '''
+
+        # Clear the surface
+        self.surface.fill(BLACK)
+
+        # Draw a border
+        self.draw_border()
+
+        # Draw the current tile info
+        if(self.inpsected_tile):
+            # Render terrain string
+            tile_terrain = self.font.render(
+                "Terrain: " + self.inpsected_tile.terrain, True, WHITE)
+            # Blit terrain string
+            self.surface.blit(tile_terrain, (BORDER_WIDTH + 10, BORDER_WIDTH))
+
+            # Check if there is an object on this tile
+            if(self.inpsected_tile.contains_obj):
+                # Render object string
+                tile_object = self.font.render(
+                    "Object: " + self.inpsected_tile.contains_obj, True, WHITE)
+                # Blit object string
+                self.surface.blit(
+                    tile_object, (BORDER_WIDTH + 10, BORDER_WIDTH))
+
+        surface_hud.blit(self.surface,
+                         ((DISPLAY_WIDTH * 4) // 5, 0))
+
+
+class hud_NearbyActionsPanel(_hud):
     '''
     The Nearby Actions menu which shows available movements on the right of the screen
     '''
 
     def __init__(self, width, height):
-        super(hud_NearbyActions, self).__init__(width, height)
+        super(hud_NearbyActionsPanel, self).__init__(width, height)
 
         self.action_list = []
         self.active_action = -1
@@ -107,8 +151,8 @@ class hud_NearbyActions(_hud):
 
         # Draw header for HUD
         self.surface.blit(self.header, (
-            BORDER_WIDTH * 6,
-            BORDER_WIDTH * 4
+            BORDER_WIDTH + 10,
+            BORDER_WIDTH
         ))
 
         # Draw every action
@@ -134,13 +178,13 @@ class hud_NearbyActions(_hud):
                          ((DISPLAY_WIDTH * 4) // 5, (DISPLAY_HEIGHT // 3)))
 
 
-class hud_PlayerInfo(_hud):
+class hud_PlayerInfoPanel(_hud):
     '''
     The player info hud element
     '''
 
     def __init__(self, width, height):
-        super(hud_PlayerInfo, self).__init__(width, height)
+        super(hud_PlayerInfoPanel, self).__init__(width, height)
 
         self.name = None
         self.health = None

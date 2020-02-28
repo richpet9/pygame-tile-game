@@ -44,11 +44,12 @@ class GameObject:
     Everything in the game that isn't a cell is a game object
     '''
 
-    def __init__(self, x, y, color):
-        self.x_cell = x
-        self.y_cell = y
+    def __init__(self, x, y, color, name):
+        self.x_cell, self.y_cell = x, y
         self.x_pixel = x * CELL_WIDTH
         self.y_pixel = y * CELL_HEIGHT
+
+        self.name = name
         self.color = color
         self.sprite = None
         self.transparent = True
@@ -85,7 +86,7 @@ class Tree(GameObject):
     '''
 
     def __init__(self, x, y):
-        super(Tree, self).__init__(x, y, color=(0, 255, 0))
+        super(Tree, self).__init__(x, y, color=(0, 255, 0), name="Tree")
 
         self.sprite = SpriteLoader.sprites.get("tree")
         self.actions = [
@@ -100,6 +101,6 @@ class Wood(GameObject):
     '''
 
     def __init__(self, x, y):
-        super(Wood, self).__init__(x, y, color=(150, 100, 60))
+        super(Wood, self).__init__(x, y, color=(150, 100, 60), name="Wood")
 
         self.sprite = SpriteLoader.sprites.get("wood")

@@ -51,14 +51,19 @@ class GameEngine:
         self.game_stats = GameStats()
 
         # Create Player Info hud
-        self.player_info = hud.hud_PlayerInfo(
+        self.player_info = hud.hud_PlayerInfoPanel(
             constants.DISPLAY_WIDTH // 5,
             constants.DISPLAY_HEIGHT // 3)
 
-        # Near by actions hud
-        self.nearby_actions = hud.hud_NearbyActions(
+        # Nearby actions hud
+        self.nearby_actions = hud.hud_NearbyActionsPanel(
             constants.DISPLAY_WIDTH // 5,
             (constants.DISPLAY_HEIGHT * 2) // 3)
+
+        # Inspection panel hud
+        self.inspection_panel = hud.hud_InspectionPanel(
+            constants.DISPLAY_WIDTH // 5,
+            constants.DISPLAY_HEIGHT // 3)
 
         # Create the camera
         self.camera = world.Camera(0, 0)
@@ -177,6 +182,9 @@ class GameEngine:
         if(inputs.get("toggle_actions")):
             # Toggle the action select mode
             GameEngine.state = "ACTIONS" if GameEngine.state != "ACTIONS" else "GAMEPLAY"
+        if(inputs.get("inspect")):
+            # Toggle the inspect mode
+            GameEngine.state = "INSPECT" if GameEngine.state != "INSPECT" else "GAMEPLAY"
         if(inputs.get("return")):
             if(GameEngine.state == "ACTIONS"):
                 if(self.nearby_actions.has_actions()):
@@ -188,7 +196,7 @@ class GameEngine:
 
                     # Check response
                     if(action_response.get("success")):
-                        if(action_response.get('recreate')):
+                        if(action_response.get("destroy_self")):
                             tile = self.map.tiles[active_action.cell[0]
                                                   ][active_action.cell[1]]
                             obj_to_destroy = tile.contains_obj
@@ -226,8 +234,11 @@ class GameEngine:
         self.camera.set_cell((0, 0))
 
         # First time update of player HUD
-        self.player_info.update_all_info(
-            self.player, self.game_stats)
+        self.player_info.update_all_info(self.player, self.game_stats)
+
+        # Update inspection panel info
+        self.inspection_panel.inpsected_tile = self.map.tiles[
+            self.player.location[0]][self.player.location[1]]
 
         # First time fov compute
         self.update_fov()
@@ -252,6 +263,7 @@ class GameEngine:
             self.handle_input(inputs)
 
             # Update player info hud
+            # TODO: This line only needs to happen when we move
             self.player_info.update_location(self.player.location)
 
             # Draw everything
@@ -281,13 +293,19 @@ class GameEngine:
         self.map.draw(self.surface_map, self.camera)
 
         # Draw the player info
+        # TODO: Create container for all the HUDs?
         self.player_info.draw(self.surface_hud)
         self.nearby_actions.draw(self.surface_hud, GameEngine.state)
+        self.inspection_panel.draw(self.surface_hud)
 
         # Check if every object is visible, and draw the visible ones
         for game_object in self.objects:
             if(self.map.tiles[game_object.x_cell][game_object.y_cell].visible):
                 game_object.draw(self.surface_map, self.camera)
+
+        # Check if we are in inspect mode, and show the cursor if so
+        # if(GameEngine.state == "INSPECT"):
+        #     self.inspect_cursor.draw(self.surface_main)
 
         # Blit the surface map to the main surface
         self.surface_main.blit(self.surface_map,

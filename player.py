@@ -11,9 +11,8 @@ class Player(GameObject):
     '''
 
     def __init__(self, x, y):
-        super(Player, self).__init__(x, y, (255, 200, 175))
+        super(Player, self).__init__(x, y, (255, 200, 175), name="Richie")
 
-        self.name = "Richie"
         self.health = 100
         self.location = (x, y)
 
