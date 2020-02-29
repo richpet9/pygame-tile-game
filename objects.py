@@ -12,8 +12,8 @@ class _action:
     Actions are performed by the player and effect the world
     '''
 
-    def __init__(self, cell, text="No Action Text", destroy_self=False):
-        self.cell = cell
+    def __init__(self, location, text="No Action Text", destroy_self=False):
+        self.location = location
         self.text = text
         self.destroy_self = destroy_self
 
@@ -23,8 +23,8 @@ class action_DropObject(_action):
     Drop Object action
     '''
 
-    def __init__(self, cell, text, obj_to_drop=None, destroy_self=False):
-        super(action_DropObject, self).__init__(cell, text, destroy_self)
+    def __init__(self, location, text, obj_to_drop=None, destroy_self=False):
+        super(action_DropObject, self).__init__(location, text, destroy_self)
 
         self.obj_to_drop = obj_to_drop
 
@@ -33,9 +33,9 @@ class action_DropObject(_action):
         This is called when we actually want to do the action
         '''
         return {
-            "location": self.cell,
+            "location": self.location,
             "success": True,
-            "spawned_objects": [self.obj_to_drop(self.cell[0], self.cell[1])],
+            "spawned_objects": [self.obj_to_drop(self.location[0], self.location[1])],
             "destroy_self": self.destroy_self
         }
 
@@ -46,7 +46,7 @@ class GameObject:
     '''
 
     def __init__(self, x, y, color, name):
-        self.x_cell, self.y_cell = x, y
+        self.location = (x, y)
         self.x_pixel = x * CELL_WIDTH
         self.y_pixel = y * CELL_HEIGHT
 
@@ -60,8 +60,8 @@ class GameObject:
         Return the pixel rectangle that this game object resides in
         '''
 
-        return pygame.Rect(self.x_cell * CELL_WIDTH,
-                           self.y_cell * CELL_HEIGHT,
+        return pygame.Rect(self.location[0] * CELL_WIDTH,
+                           self.location[1] * CELL_HEIGHT,
                            CELL_WIDTH,
                            CELL_HEIGHT)
 

@@ -63,8 +63,8 @@ class Map:
         '''
         Draw the map cells
         '''
-        for y_tile in range(camera.y_cell, camera.y_cell + constants.CAMERA_HEIGHT_CELL):
-            for x_tile in range(camera.x_cell, camera.x_cell + constants.CAMERA_WIDTH_CELL):
+        for y_tile in range(camera.location[1] - 1, (camera.location[1] + 2) + constants.CAMERA_HEIGHT_CELL):
+            for x_tile in range(camera.location[0] - 1, (camera.location[0] + 2) + constants.CAMERA_WIDTH_CELL):
                 self.tiles[x_tile][y_tile].draw(surface)
 
 
@@ -127,8 +127,7 @@ class Camera:
     '''
 
     def __init__(self, x, y):
-        self.x_cell = x
-        self.y_cell = y
+        self.location = (x, y)
 
     def center_at(self, location):
         '''
@@ -136,8 +135,8 @@ class Camera:
         '''
 
         # Get centered coordinates
-        centered_x = location[0] - (constants.CAMERA_WIDTH_CELL // 2)
-        centered_y = location[1] - (constants.CAMERA_HEIGHT_CELL // 2)
+        centered_x = (location[0] - (constants.CAMERA_WIDTH_CELL // 2))
+        centered_y = (location[1] - (constants.CAMERA_HEIGHT_CELL // 2))
 
         # Set the camera center cell
         self.set_cell((centered_x, centered_y))
@@ -147,20 +146,21 @@ class Camera:
         Return the pixel rectangle that this object can see
         '''
 
-        return pygame.Rect((self.x_cell * constants.CELL_WIDTH),
-                           (self.y_cell * constants.CELL_WIDTH),
-                           constants.CAMERA_WIDTH - constants.CELL_WIDTH,
-                           constants.CAMERA_HEIGHT - constants.CELL_HEIGHT)
+        return pygame.Rect(((self.location[0]) * constants.CELL_WIDTH),
+                           ((self.location[1]) * constants.CELL_WIDTH),
+                           (constants.CAMERA_WIDTH + (2 * constants.CELL_WIDTH)),
+                           (constants.CAMERA_HEIGHT + (2 * constants.CELL_HEIGHT)))
 
     def set_cell(self, coords):
         '''
         Set the X cell and Y cell location of the camera's top left point
         '''
 
-        self.x_cell = clamp(coords[0], 0,
-                            constants.MAP_WIDTH - constants.CAMERA_WIDTH_CELL)
-        self.y_cell = clamp(coords[1], 0,
-                            constants.MAP_HEIGHT - constants.CAMERA_HEIGHT_CELL)
+        x = clamp(coords[0], 0,
+                  constants.MAP_WIDTH - constants.CAMERA_WIDTH_CELL)
+        y = clamp(coords[1], 0,
+                  constants.MAP_HEIGHT - constants.CAMERA_HEIGHT_CELL)
+        self.location = (x, y)
 
 
 def get_tile_neighbors(tile):
@@ -194,6 +194,7 @@ def get_tile_neighbors(tile):
 
 
 def has_tree(tile):
+    '''Check if tile has a tree on it'''
     if(tile.contains_obj):
         return tile.contains_obj.name == "tree"
     return False

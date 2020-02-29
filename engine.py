@@ -11,6 +11,7 @@ import graphics
 import world
 import player
 import hud
+from util import clamp
 
 
 class GameStats:
@@ -91,7 +92,11 @@ class GameEngine:
         # Active action reference
         self.active_action = None
 
-    def handle_object_response(self, response):
+    def handle_action_response(self, response):
+        '''
+        Handle an action response
+        '''
+
         # Get the location
         location = response.get("location")
         tile = self.map.tiles[location[0]][location[1]]
@@ -107,7 +112,8 @@ class GameEngine:
             # Check for spawned objects flag
             for obj in response.get("spawned_objects"):
                 self.objects.append(obj)
-                self.map.tiles[obj.x_cell][obj.y_cell].contains_obj = obj
+                self.map.tiles[obj.location[0]
+                               ][obj.location[1]].contains_obj = obj
 
     def update_fov(self):
         '''
@@ -116,33 +122,34 @@ class GameEngine:
         # Create an array of transparency
         # TODO: Maybe have an array of transparency for the entire map
         #       stored in memory and updated when map changes?
-        tiles = np.ones((constants.CAMERA_WIDTH_CELL,
-                         constants.CAMERA_HEIGHT_CELL), dtype=bool)
+        tiles = np.ones((constants.CAMERA_WIDTH_CELL + 1,
+                         constants.CAMERA_HEIGHT_CELL + 1),
+                        dtype=bool)
         # Get every visible tile
-        for y_index, y_tile in enumerate(range(self.camera.y_cell,
-                                               self.camera.y_cell +
-                                               constants.CAMERA_HEIGHT_CELL)):
-            for x_index, x_tile in enumerate(range(self.camera.x_cell,
-                                                   self.camera.x_cell +
-                                                   constants.CAMERA_WIDTH_CELL)):
+        for y_index, y_tile in enumerate(range(self.camera.location[1],
+                                               self.camera.location[1] +
+                                               constants.CAMERA_HEIGHT_CELL + 1)):
+            for x_index, x_tile in enumerate(range(self.camera.location[0],
+                                                   self.camera.location[0] +
+                                                   constants.CAMERA_WIDTH_CELL + 1)):
                 # Store it's visibility in 2d array
                 tiles[x_index][y_index] = self.map.tiles[x_tile][y_tile].check_transparency()
 
         # Pass the array into tcod.map.compute_fov() with player's position
         res = compute_fov(
             tiles,
-            (self.player.x_cell - self.camera.x_cell,
-             self.player.y_cell - self.camera.y_cell),
+            (self.player.location[0] - self.camera.location[0],
+             self.player.location[1] - self.camera.location[1]),
             radius=constants.FOV_RADIUS,
             algorithm=constants.FOV_ALG)
 
         # Go through the returned array and update every tile in that location
-        for y_index, y_tile in enumerate(range(self.camera.y_cell,
-                                               self.camera.y_cell +
-                                               constants.CAMERA_HEIGHT_CELL)):
-            for x_index, x_tile in enumerate(range(self.camera.x_cell,
-                                                   self.camera.x_cell +
-                                                   constants.CAMERA_WIDTH_CELL)):
+        for y_index, y_tile in enumerate(range(self.camera.location[1],
+                                               self.camera.location[1] +
+                                               constants.CAMERA_HEIGHT_CELL + 1)):
+            for x_index, x_tile in enumerate(range(self.camera.location[0],
+                                                   self.camera.location[0] +
+                                                   constants.CAMERA_WIDTH_CELL + 1)):
                 tile_to_update = self.map.tiles[x_tile][y_tile]
                 tile_to_update.visible = res[x_index][y_index]
                 tile_to_update.explored = True if res[x_index][y_index] else tile_to_update.explored
@@ -188,7 +195,7 @@ class GameEngine:
 
         # Check if every object is visible, and draw the visible ones
         for game_object in self.objects:
-            if(self.map.tiles[game_object.x_cell][game_object.y_cell].visible):
+            if(self.map.tiles[game_object.location[0]][game_object.location[1]].visible):
                 game_object.draw(self.surface_map, self.camera)
 
         # Check if we are in inspect mode, and show the cursor if so
@@ -203,8 +210,8 @@ class GameEngine:
 
         # Blit the surface map to the main surface
         self.surface_main.blit(self.surface_map,
-                               (constants.DISPLAY_WIDTH // 5,
-                                constants.CELL_HEIGHT // 2),
+                               ((constants.DISPLAY_WIDTH // 5),
+                                0),
                                self.camera.get_rect())
 
         # Blit the surface hud to the main surface
@@ -245,7 +252,7 @@ class GameEngine:
                 if(self.nearby_actions.has_actions()):
                     # Move the inspection cursor to the current action
                     self.i_cursor.set_location(
-                        self.nearby_actions.get_active_action().cell)
+                        self.nearby_actions.get_active_action().location)
             elif(GameEngine.state == "INSPECT"):
                 # Move the inspect cursor
                 self.i_cursor.move(direction)
@@ -257,7 +264,7 @@ class GameEngine:
                 if(self.nearby_actions.has_actions()):
                     # Move the inspection cursor to the current action
                     self.i_cursor.set_location(
-                        self.nearby_actions.get_active_action().cell)
+                        self.nearby_actions.get_active_action().location)
             else:
                 # Toggle off action menu
                 GameEngine.state = "GAMEPLAY"
@@ -282,7 +289,7 @@ class GameEngine:
                     active_action = self.nearby_actions.get_active_action()
 
                     # Commit the action
-                    self.handle_object_response(active_action.act())
+                    self.handle_action_response(active_action.act())
 
                     # Update FOV
                     self.update_fov()
@@ -296,7 +303,7 @@ class GameEngine:
                     if(self.nearby_actions.has_actions()):
                         # Move the inspection cursor to the current action
                         self.i_cursor.set_location(
-                            self.nearby_actions.get_active_action().cell)
+                            self.nearby_actions.get_active_action().location)
                     else:
                         # If we don't have more actions, leave action mode
                         GameEngine.state = "GAMEPLAY"
