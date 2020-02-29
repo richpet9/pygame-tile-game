@@ -87,7 +87,7 @@ class Tree(GameObject):
     '''
 
     def __init__(self, x, y):
-        super(Tree, self).__init__(x, y, color=(0, 255, 0), name="Tree")
+        super(Tree, self).__init__(x, y, color=(0, 255, 0), name="tree")
 
         self.sprite = SpriteLoader.sprites.get("tree")
         self.transparent = False
@@ -102,7 +102,7 @@ class Wood(GameObject):
     '''
 
     def __init__(self, x, y):
-        super(Wood, self).__init__(x, y, color=(150, 100, 60), name="Wood")
+        super(Wood, self).__init__(x, y, color=(150, 100, 60), name="wood")
 
         self.sprite = SpriteLoader.sprites.get("wood")
         self.transparent = True

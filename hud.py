@@ -2,7 +2,7 @@
 The hud module contains the various HUD info screens and surfaces
 '''
 import pygame
-from util import format_time
+from util import format_time, clamp
 from constants import DISPLAY_WIDTH, DISPLAY_HEIGHT
 
 WHITE = (255, 255, 255)
@@ -106,11 +106,13 @@ class hud_InspectionPanel(_hud):
                     "Object: " + self.inpsected_tile.contains_obj.name, True, WHITE)
                 # Blit object string
                 self.surface.blit(
-                    tile_object, (BORDER_WIDTH + 10, BORDER_WIDTH + self.font.get_linesize() + LINE_SPACING))
+                    tile_object,
+                    (BORDER_WIDTH + 10, BORDER_WIDTH + self.font.get_linesize() + LINE_SPACING))
 
         # Blit onto the main hud surface
-        surface_hud.blit(self.surface,
-                         ((DISPLAY_WIDTH * 4) // 5, 0))
+        surface_hud.blit(
+            self.surface,
+            ((DISPLAY_WIDTH * 4) // 5, 0))
 
 
 class hud_NearbyActionsPanel(_hud):
@@ -122,24 +124,24 @@ class hud_NearbyActionsPanel(_hud):
         super(hud_NearbyActionsPanel, self).__init__(width, height)
 
         self.action_list = []
-        self.active_action = -1
+        self.active_action_index = -1
         self.header = self.font.render("Nearby Actions", False, WHITE)
 
     def get_active_action(self):
         '''
         Get the active action from the current index
         '''
-        return self.action_list[self.active_action]
+        return self.action_list[self.active_action_index]
 
     def move_active_action(self, direction):
         '''
         Move the active selected action by the specified tuple distance
         '''
         if(self.has_actions()):
-            self.active_action = (self.active_action +
-                                  direction[1]) % len(self.action_list)
+            self.active_action_index = (self.active_action_index +
+                                        direction[1]) % len(self.action_list)
         else:
-            self.active_action = -1
+            self.active_action_index = -1
 
     def has_actions(self):
         '''
@@ -154,11 +156,16 @@ class hud_NearbyActionsPanel(_hud):
 
         # Check if the list of actions is empty or not
         if(len(actions) > 0):
+            # Set the actions
             self.action_list = actions
+            # Clamp the active index to the list length
+            self.active_action_index = clamp(self.active_action_index,
+                                             0,
+                                             len(actions) - 1)
         else:
-            # If it's empty, be sure to reset active_action to 0
+            # If it's empty, be sure to reset active_action_index to 0
             self.action_list = []
-            self.active_action = 0
+            self.active_action_index = 0
 
     def draw(self, surface_hud, gamestate):
         '''
@@ -184,7 +191,7 @@ class hud_NearbyActionsPanel(_hud):
         for key, action in enumerate(self.action_list):
             color = GRAY
             # Check if the current active action if the action we are rendering
-            if(self.active_action == key and gamestate == "ACTIONS"):
+            if(self.active_action_index == key and gamestate == "ACTIONS"):
                 color = RED
 
             # TODO: Cache this render
@@ -278,7 +285,6 @@ class hud_PlayerInfoPanel(_hud):
         '''
         Update only turn_count
         '''
-        # TODO: Create colon character
         self.turn_count = self.font.render(
             "Turn " + str(turn_count),
             False,

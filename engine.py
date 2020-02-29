@@ -11,7 +11,6 @@ import graphics
 import world
 import player
 import hud
-import objects
 
 
 class GameStats:
@@ -64,6 +63,9 @@ class GameEngine:
         self.inspection_panel = hud.hud_InspectionPanel(
             constants.DISPLAY_WIDTH // 5,
             constants.DISPLAY_HEIGHT // 3)
+
+        # Cursor reference
+        self.i_cursor = self.inspection_panel.cursor
 
         # Create the camera
         self.camera = world.Camera(0, 0)
@@ -191,8 +193,8 @@ class GameEngine:
 
         # Check if we are in inspect mode, and show the cursor if so
         if(GameEngine.state == "INSPECT" or GameEngine.state == "ACTIONS"):
-            cell_location = (self.inspection_panel.cursor.location[0] * constants.CELL_WIDTH,
-                             self.inspection_panel.cursor.location[1] * constants.CELL_HEIGHT)
+            cell_location = (self.i_cursor.location[0] * constants.CELL_WIDTH,
+                             self.i_cursor.location[1] * constants.CELL_HEIGHT)
             rect = pygame.Rect(cell_location[0],
                                cell_location[1],
                                constants.CELL_WIDTH,
@@ -218,21 +220,17 @@ class GameEngine:
             self.quit_game = True
 
         if(inputs.get("move_player")):
+            # Get the direction
             direction = inputs.get("move_player")
+
             # Player move command
             if(GameEngine.state == "GAMEPLAY"):
                 # Move the player
                 self.player.move(direction)
                 # Move inspection cursor with player
-                self.inspection_panel.cursor.move(direction)
+                self.i_cursor.move(direction)
                 # Set the camera on the player
-                # TODO: Clean this up by creating a "center on" method for camera
-                centered_x = self.player.x_cell - \
-                    (constants.CAMERA_WIDTH_CELL // 2)
-                centered_y = self.player.y_cell - \
-                    (constants.CAMERA_HEIGHT_CELL // 2)
-                # Set the camera center cell
-                self.camera.set_cell((centered_x, centered_y))
+                self.camera.center_at(self.player.location)
                 # Get new nearby actions
                 self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
                                                                           self.map.tiles))
@@ -246,11 +244,11 @@ class GameEngine:
 
                 if(self.nearby_actions.has_actions()):
                     # Move the inspection cursor to the current action
-                    self.inspection_panel.cursor.set_location(
+                    self.i_cursor.set_location(
                         self.nearby_actions.get_active_action().cell)
             elif(GameEngine.state == "INSPECT"):
                 # Move the inspect cursor
-                self.inspection_panel.cursor.move(direction)
+                self.i_cursor.move(direction)
 
         if(inputs.get("toggle_actions")):
             # Toggle the action select mode
@@ -258,13 +256,13 @@ class GameEngine:
                 GameEngine.state = "ACTIONS"
                 if(self.nearby_actions.has_actions()):
                     # Move the inspection cursor to the current action
-                    self.inspection_panel.cursor.set_location(
+                    self.i_cursor.set_location(
                         self.nearby_actions.get_active_action().cell)
             else:
                 # Toggle off action menu
                 GameEngine.state = "GAMEPLAY"
                 # Reset the cursor to players location
-                self.inspection_panel.cursor.set_location(self.player.location)
+                self.i_cursor.set_location(self.player.location)
 
         if(inputs.get("toggle_inspect")):
             # Toggle the inspect mode
@@ -275,7 +273,7 @@ class GameEngine:
                 # Set to gameplay if in inspection mode
                 GameEngine.state = "GAMEPLAY"
                 # Reset the cursor to players location
-                self.inspection_panel.cursor.set_location(self.player.location)
+                self.i_cursor.set_location(self.player.location)
 
         if(inputs.get("return")):
             if(GameEngine.state == "ACTIONS"):
@@ -297,14 +295,23 @@ class GameEngine:
                     # If we have new actions, be sure to move the inspection cursor to it
                     if(self.nearby_actions.has_actions()):
                         # Move the inspection cursor to the current action
-                        self.inspection_panel.cursor.set_location(
+                        self.i_cursor.set_location(
                             self.nearby_actions.get_active_action().cell)
                     else:
                         # If we don't have more actions, leave action mode
                         GameEngine.state = "GAMEPLAY"
                         # Reset the cursor to players location
-                        self.inspection_panel.cursor.set_location(
+                        self.i_cursor.set_location(
                             self.player.location)
+
+        # We do this stuff after EVERY input
+        # Update player location in the hud
+        self.player_info.update_location(self.player.location)
+
+        # Update inspection panel info
+        self.inspection_panel.inpsected_tile = self.map.tiles[
+            self.i_cursor.location[0]][
+            self.i_cursor.location[1]]
 
     def start(self):
         '''
@@ -317,18 +324,12 @@ class GameEngine:
         # Add player to objects list
         self.objects.append(self.player)
 
-        # Create some trees for debuggin
-        for i in range(10):
-            new_tree = objects.Tree(i + 10, i + 10)
-            self.map.tiles[i + 10][i + 10].contains_obj = new_tree
-            self.objects.append(new_tree)
+        # TEmp map generation
+        self.map.generate_forests(self.objects)
 
-        # DEBUG: Set the camera to (0, 0) (temporary)
-        self.camera.set_cell((0, 0))
-
-        # First time update of player HUD
+        # First time update of player HUD and inspection cursor location
         self.player_info.update_all_info(self.player, self.game_stats)
-        self.inspection_panel.cursor.set_location(self.player.location)
+        self.i_cursor.set_location(self.player.location)
 
         # First time fov compute
         self.update_fov()
@@ -351,14 +352,6 @@ class GameEngine:
 
             # Handle inputs
             self.handle_input(inputs)
-
-            # Update player info hud
-            # TODO: This line only needs to happen when we move
-            self.player_info.update_location(self.player.location)
-            # Update inspection panel info
-            self.inspection_panel.inpsected_tile = self.map.tiles[
-                self.inspection_panel.cursor.location[0]][
-                self.inspection_panel.cursor.location[1]]
 
             # Draw everything
             self.draw()

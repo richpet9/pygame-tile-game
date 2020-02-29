@@ -5,7 +5,9 @@ import random
 import pygame
 import constants
 from graphics import SpriteLoader
+from objects import Tree
 from util import clamp
+
 
 TERRAIN_COLORS = {
     "snow": (200, 210, 225),
@@ -26,7 +28,36 @@ class Map:
         self.tiles = [[Tile(x, y) for y in range(height)]
                       for x in range(width)]
 
-        self.sprites = SpriteLoader.sprites
+    def generate_forests(self, objects):
+        '''
+        Use cellular automata to generate some forests
+        '''
+        # Create random tree tiles
+        for y in range(constants.MAP_HEIGHT):
+            for x in range(constants.MAP_WIDTH):
+                if(random.random() < 0.3 and self.tiles[x][y].terrain != "rock"):
+                    self.tiles[x][y].contains_obj = Tree(x, y)
+                    objects.append(self.tiles[x][y].contains_obj)
+
+        # Using cellular automata
+        # 5 passes are done
+        for _ in range(5):
+            for y in range(constants.MAP_HEIGHT):
+                for x in range(constants.MAP_WIDTH):
+                    current_tile = self.tiles[x][y]
+                    neighbors = get_tile_neighbors(current_tile)
+                    tree_neighbors = 0
+
+                    for neighbor in neighbors:
+                        if(has_tree(self.tiles[neighbor[0]][neighbor[1]])):
+                            tree_neighbors += 1
+
+                    if(not has_tree(current_tile) and tree_neighbors > 3 and current_tile.terrain != "rock"):
+                        current_tile.contains_obj = Tree(x, y)
+                        objects.append(self.tiles[x][y].contains_obj)
+                    elif(has_tree(current_tile) and tree_neighbors < 2):
+                        objects.remove(self.tiles[x][y].contains_obj)
+                        current_tile.contains_obj = None
 
     def draw(self, surface, camera):
         '''
@@ -43,8 +74,8 @@ class Tile:
     '''
 
     def __init__(self, x, y):
-        self.x_pos, self.y_pos = x, y
-        self.terrain = "snow" if random.random() < 0.65 else "rock"
+        self.location = (x, y)
+        self.terrain = "snow" if random.random() < 0.85 else "rock"
         self.contains_obj = None
         self.transparent = True
         self.visible = True
@@ -55,8 +86,8 @@ class Tile:
         '''
         Return the rectangle pixel area of this tile
         '''
-        return pygame.Rect(self.x_pos * constants.CELL_WIDTH,
-                           self.y_pos * constants.CELL_HEIGHT,
+        return pygame.Rect(self.location[0] * constants.CELL_WIDTH,
+                           self.location[1] * constants.CELL_HEIGHT,
                            constants.CELL_WIDTH,
                            constants.CELL_HEIGHT)
 
@@ -99,10 +130,23 @@ class Camera:
         self.x_cell = x
         self.y_cell = y
 
+    def center_at(self, location):
+        '''
+        Center the camera at the specified cell
+        '''
+
+        # Get centered coordinates
+        centered_x = location[0] - (constants.CAMERA_WIDTH_CELL // 2)
+        centered_y = location[1] - (constants.CAMERA_HEIGHT_CELL // 2)
+
+        # Set the camera center cell
+        self.set_cell((centered_x, centered_y))
+
     def get_rect(self):
         '''
         Return the pixel rectangle that this object can see
         '''
+
         return pygame.Rect((self.x_cell * constants.CELL_WIDTH),
                            (self.y_cell * constants.CELL_WIDTH),
                            constants.CAMERA_WIDTH - constants.CELL_WIDTH,
@@ -112,7 +156,44 @@ class Camera:
         '''
         Set the X cell and Y cell location of the camera's top left point
         '''
+
         self.x_cell = clamp(coords[0], 0,
                             constants.MAP_WIDTH - constants.CAMERA_WIDTH_CELL)
         self.y_cell = clamp(coords[1], 0,
                             constants.MAP_HEIGHT - constants.CAMERA_HEIGHT_CELL)
+
+
+def get_tile_neighbors(tile):
+    '''
+    Get all the neighboring coordinates for the specified tile
+    '''
+    if(not isinstance(tile, Tile)):
+        raise TypeError("Invalid arguement for get_tile_neighbors: " +
+                        " Got type '" +
+                        type(tile).__name__ +
+                        "' expected type '" +
+                        Tile.__name__ + "'")
+
+    res = []
+
+    for y in range(3):
+        for x in range(3):
+            new_x = (tile.location[0] - 1) + x
+            new_y = (tile.location[1] - 1) + y
+
+            if(new_x < 0 or new_x > constants.MAP_WIDTH - 1):
+                continue
+            if(new_y < 0 or new_y > constants.MAP_HEIGHT - 1):
+                continue
+            if(new_x == tile.location[0] and new_y == tile.location[1]):
+                continue
+
+            res.append((new_x, new_y))
+
+    return res
+
+
+def has_tree(tile):
+    if(tile.contains_obj):
+        return tile.contains_obj.name == "tree"
+    return False
