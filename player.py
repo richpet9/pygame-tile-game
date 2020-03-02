@@ -2,7 +2,7 @@
 Module for handling player operations and info
 '''
 
-from engine import GameObject
+from objects import GameObject
 
 
 class Player(GameObject):
@@ -11,9 +11,8 @@ class Player(GameObject):
     '''
 
     def __init__(self, x, y):
-        GameObject.__init__(self, x, y, (255, 200, 175))
+        super(Player, self).__init__(x, y, (255, 200, 175), name="Richie")
 
-        self.name = "Richie"
         self.health = 100
         self.location = (x, y)
 
@@ -22,6 +21,21 @@ class Player(GameObject):
         Move the player is the specified direction
         direction: Tuple (int, int) the (x, y) distance to move
         '''
-        self.x_cell += direction[0]
-        self.y_cell += direction[1]
-        self.location = (self.x_cell, self.y_cell)
+        x = self.location[0] + direction[0]
+        y = self.location[1] + direction[1]
+        self.location = (x, y)
+
+
+def get_nearby_actions(player, tiles):
+    '''
+    Get the nearby actions for the specified player on the given tiles
+    '''
+    res = []
+    for y in range(player.location[1] - 1, player.location[1] + 2):
+        for x in range(player.location[0] - 1, player.location[0] + 2):
+            neighbor_tile = tiles[x][y]
+            if(neighbor_tile.contains_obj):
+                for action in neighbor_tile.contains_obj.actions:
+                    res.append(action)
+
+    return res
