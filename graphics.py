@@ -16,7 +16,8 @@ class Sprite:
 
         if(not animates):
             self.image = [pygame.transform.scale(
-                pygame.image.load(file_path), (CELL_WIDTH, CELL_HEIGHT))]
+                pygame.image.load(file_path), (CELL_WIDTH, CELL_HEIGHT)
+            )]
         else:
             # Load in multiple images from sprite sheet
             return
@@ -37,5 +38,6 @@ class SpriteLoader:
             "snow": Sprite("resources/sprites/snow.png"),
             "rock": Sprite("resources/sprites/rock.png"),
             "tree": Sprite("resources/sprites/tree.png"),
-            "wood": Sprite("resources/sprites/wood.png")
+            "wood": Sprite("resources/sprites/wood.png"),
+            "cursor": Sprite("resources/sprites/cursor.png")
         }

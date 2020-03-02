@@ -5,6 +5,7 @@ import pygame
 from util import format_time, clamp
 from constants import DISPLAY_WIDTH, DISPLAY_HEIGHT
 
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (250, 0, 0)

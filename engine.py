@@ -7,10 +7,10 @@ import numpy as np
 from tcod.map import compute_fov
 
 import constants
-import graphics
 import world
 import player
 import hud
+from graphics import SpriteLoader
 from util import clamp
 
 
@@ -42,7 +42,7 @@ class GameEngine:
         pygame.init()
 
         # Load Sprites
-        graphics.SpriteLoader.load_sprites()
+        SpriteLoader.load_sprites()
 
         # Create player variable
         self.player = None
@@ -202,11 +202,9 @@ class GameEngine:
         if(GameEngine.state == "INSPECT" or GameEngine.state == "ACTIONS"):
             cell_location = (self.i_cursor.location[0] * constants.CELL_WIDTH,
                              self.i_cursor.location[1] * constants.CELL_HEIGHT)
-            rect = pygame.Rect(cell_location[0],
-                               cell_location[1],
-                               constants.CELL_WIDTH,
-                               constants.CELL_HEIGHT)
-            self.surface_map.fill((255, 0, 255), rect)
+
+            self.surface_map.blit(SpriteLoader.sprites.get("cursor").image[0],
+                                  (cell_location[0], cell_location[1]))
 
         # Blit the surface map to the main surface
         self.surface_main.blit(self.surface_map,
