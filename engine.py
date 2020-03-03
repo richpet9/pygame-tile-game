@@ -10,8 +10,7 @@ import constants
 import world
 import player
 import hud
-from graphics import SpriteLoader
-from util import clamp
+from graphics import SpriteLoader, Renderer
 
 
 class GameStats:
@@ -44,53 +43,54 @@ class GameEngine:
         # Load Sprites
         SpriteLoader.load_sprites()
 
-        # Create player variable
-        self.player = None
-
         # Create game stats
         self.game_stats = GameStats()
 
-        # Create Player Info hud
-        self.player_info = hud.hud_PlayerInfoPanel(
+        # Create the HUD container
+        self.hud_container = hud.HUDContainer()
+        # Player Info hud
+        self.hud_container.add_hud("PLAYER_INFO_PANEL", hud.hud_PlayerInfoPanel(
             constants.DISPLAY_WIDTH // 5,
-            constants.DISPLAY_HEIGHT // 3)
-
+            constants.DISPLAY_HEIGHT // 3))
         # Nearby actions hud
-        self.nearby_actions = hud.hud_NearbyActionsPanel(
+        self.hud_container.add_hud("ACTION_PANEL", hud.hud_NearbyActionsPanel(
             constants.DISPLAY_WIDTH // 5,
-            (constants.DISPLAY_HEIGHT * 2) // 3)
-
+            (constants.DISPLAY_HEIGHT * 2) // 3))
         # Inspection panel hud
-        self.inspection_panel = hud.hud_InspectionPanel(
+        self.hud_container.add_hud("INSPECTION_PANEL", hud.hud_InspectionPanel(
             constants.DISPLAY_WIDTH // 5,
-            constants.DISPLAY_HEIGHT // 3)
+            constants.DISPLAY_HEIGHT // 3))
 
-        # Cursor reference
-        self.i_cursor = self.inspection_panel.cursor
+        # Create a referece to the inspection cursor for later
+        self.i_cursor = self.hud_container.get_hud("INSPECTION_PANEL").cursor
 
         # Create the camera
         self.camera = world.Camera(0, 0)
 
         # Create the main game surface
-        self.surface_main = pygame.display.set_mode((constants.DISPLAY_WIDTH,
-                                                     constants.DISPLAY_HEIGHT))
+        surface_main = pygame.display.set_mode((constants.DISPLAY_WIDTH,
+                                                constants.DISPLAY_HEIGHT))
         # Create the map surface
-        self.surface_map = pygame.Surface((constants.MAP_WIDTH * constants.CELL_WIDTH,
-                                           constants.MAP_HEIGHT * constants.CELL_HEIGHT))
+        surface_map = pygame.Surface((constants.MAP_WIDTH * constants.CELL_WIDTH,
+                                      constants.MAP_HEIGHT * constants.CELL_HEIGHT))
         # Create the hud surface
-        self.surface_hud = pygame.Surface((constants.DISPLAY_WIDTH,
-                                           constants.DISPLAY_HEIGHT))
+        surface_hud = pygame.Surface((constants.DISPLAY_WIDTH,
+                                      constants.DISPLAY_HEIGHT))
+        # Create the renderer
+        self.renderer = Renderer(
+            surface_main, surface_map, surface_hud, self.camera)
+
         # Create the pygame clock
         self.clock = pygame.time.Clock()
 
         # Create the map
-        self.map = world.Map(constants.MAP_WIDTH, constants.MAP_HEIGHT)
+        self.game_map = world.Map(constants.MAP_WIDTH, constants.MAP_HEIGHT)
 
         # Create the object container
-        self.objects = []
+        self.object_container = []
 
-        # Active action reference
-        self.active_action = None
+        # Create player variable
+        self.player = None
 
     def handle_action_response(self, response):
         '''
@@ -99,7 +99,7 @@ class GameEngine:
 
         # Get the location
         location = response.get("location")
-        tile = self.map.tiles[location[0]][location[1]]
+        tile = self.game_map.tiles[location[0]][location[1]]
 
         # Check response
         if(response.get("success")):
@@ -107,13 +107,13 @@ class GameEngine:
             if(response.get("destroy_self")):
                 obj_to_destroy = tile.contains_obj
                 tile.contains_obj = None
-                self.objects.remove(obj_to_destroy)
+                self.object_container.remove(obj_to_destroy)
 
             # Check for spawned objects flag
             for obj in response.get("spawned_objects"):
-                self.objects.append(obj)
-                self.map.tiles[obj.location[0]
-                               ][obj.location[1]].contains_obj = obj
+                self.object_container.append(obj)
+                self.game_map.tiles[obj.location[0]
+                                    ][obj.location[1]].contains_obj = obj
 
     def update_fov(self):
         '''
@@ -133,7 +133,7 @@ class GameEngine:
                                                    self.camera.location[0] +
                                                    constants.CAMERA_WIDTH_CELL + 1)):
                 # Store it's visibility in 2d array
-                tiles[x_index][y_index] = self.map.tiles[x_tile][y_tile].check_transparency()
+                tiles[x_index][y_index] = self.game_map.tiles[x_tile][y_tile].check_transparency()
 
         # Pass the array into tcod.map.compute_fov() with player's position
         res = compute_fov(
@@ -150,7 +150,7 @@ class GameEngine:
             for x_index, x_tile in enumerate(range(self.camera.location[0],
                                                    self.camera.location[0] +
                                                    constants.CAMERA_WIDTH_CELL + 1)):
-                tile_to_update = self.map.tiles[x_tile][y_tile]
+                tile_to_update = self.game_map.tiles[x_tile][y_tile]
                 tile_to_update.visible = res[x_index][y_index]
                 tile_to_update.explored = True if res[x_index][y_index] else tile_to_update.explored
 
@@ -172,48 +172,8 @@ class GameEngine:
         self.game_stats.time = new_time
 
         # Update player info
-        self.player_info.update_all_info(self.player, self.game_stats)
-
-    def draw(self):
-        '''
-        Draw all the things in the game
-        '''
-
-        # Clear both surfaces with black
-        self.surface_main.fill(pygame.Color(0, 0, 0))
-        self.surface_map.fill(pygame.Color(0, 0, 0))
-        self.surface_hud.fill(pygame.Color(0, 0, 0, 0))
-
-        # Draw the map onto the surface map
-        self.map.draw(self.surface_map, self.camera)
-
-        # Draw the player info
-        # TODO: Create container for all the HUDs?
-        self.player_info.draw(self.surface_hud)
-        self.nearby_actions.draw(self.surface_hud, GameEngine.state)
-        self.inspection_panel.draw(self.surface_hud)
-
-        # Check if every object is visible, and draw the visible ones
-        for game_object in self.objects:
-            if(self.map.tiles[game_object.location[0]][game_object.location[1]].visible):
-                game_object.draw(self.surface_map, self.camera)
-
-        # Check if we are in inspect mode, and show the cursor if so
-        if(GameEngine.state == "INSPECT" or GameEngine.state == "ACTIONS"):
-            cell_location = (self.i_cursor.location[0] * constants.CELL_WIDTH,
-                             self.i_cursor.location[1] * constants.CELL_HEIGHT)
-
-            self.surface_map.blit(SpriteLoader.sprites.get("cursor").image[0],
-                                  (cell_location[0], cell_location[1]))
-
-        # Blit the surface map to the main surface
-        self.surface_main.blit(self.surface_map,
-                               ((constants.DISPLAY_WIDTH // 5),
-                                0),
-                               self.camera.get_rect())
-
-        # Blit the surface hud to the main surface
-        self.surface_main.blit(self.surface_hud, (0, 0))
+        self.hud_container.get_hud("PLAYER_INFO_PANEL").update_all_info(self.player,
+                                                                        self.game_stats)
 
     def handle_input(self, inputs):
         '''
@@ -228,6 +188,9 @@ class GameEngine:
             # Get the direction
             direction = inputs.get("move_player")
 
+            # Get action panel
+            action_panel = self.hud_container.get_hud("ACTION_PANEL")
+
             # Player move command
             if(GameEngine.state == "GAMEPLAY"):
                 # Move the player
@@ -237,32 +200,35 @@ class GameEngine:
                 # Set the camera on the player
                 self.camera.center_at(self.player.location)
                 # Get new nearby actions
-                self.nearby_actions.set_actions(player.get_nearby_actions(self.player,
-                                                                          self.map.tiles))
+                action_panel.set_actions(player.get_nearby_actions(self.player,
+                                                                   self.game_map.tiles))
                 # Update FOV
                 self.update_fov()
                 # Increment turn
                 self.increment_turn()
             elif(GameEngine.state == "ACTIONS"):
                 # Change active action
-                self.nearby_actions.move_active_action(direction)
+                action_panel.move_active_action(direction)
 
-                if(self.nearby_actions.has_actions()):
+                if(action_panel.has_actions()):
                     # Move the inspection cursor to the current action
                     self.i_cursor.set_location(
-                        self.nearby_actions.get_active_action().location)
+                        action_panel.get_active_action().location)
             elif(GameEngine.state == "INSPECT"):
                 # Move the inspect cursor
                 self.i_cursor.move(direction)
 
         if(inputs.get("toggle_actions")):
+            # Get action panel
+            action_panel = self.hud_container.get_hud("ACTION_PANEL")
+
             # Toggle the action select mode
             if(GameEngine.state != "ACTIONS"):
                 GameEngine.state = "ACTIONS"
-                if(self.nearby_actions.has_actions()):
+                if(action_panel.has_actions()):
                     # Move the inspection cursor to the current action
                     self.i_cursor.set_location(
-                        self.nearby_actions.get_active_action().location)
+                        action_panel.get_active_action().location)
             else:
                 # Toggle off action menu
                 GameEngine.state = "GAMEPLAY"
@@ -282,9 +248,11 @@ class GameEngine:
 
         if(inputs.get("return")):
             if(GameEngine.state == "ACTIONS"):
-                if(self.nearby_actions.has_actions()):
+                # Get action panel
+                action_panel = self.hud_container.get_hud("ACTION_PANEL")
+                if(action_panel.has_actions()):
                     # Get the action
-                    active_action = self.nearby_actions.get_active_action()
+                    active_action = action_panel.get_active_action()
 
                     # Commit the action
                     self.handle_action_response(active_action.act())
@@ -294,14 +262,14 @@ class GameEngine:
                     self.increment_turn()
 
                     # Get new nearby actions
-                    self.nearby_actions.set_actions(
-                        player.get_nearby_actions(self.player, self.map.tiles))
+                    action_panel.set_actions(
+                        player.get_nearby_actions(self.player, self.game_map.tiles))
 
                     # If we have new actions, be sure to move the inspection cursor to it
-                    if(self.nearby_actions.has_actions()):
+                    if(action_panel.has_actions()):
                         # Move the inspection cursor to the current action
                         self.i_cursor.set_location(
-                            self.nearby_actions.get_active_action().location)
+                            action_panel.get_active_action().location)
                     else:
                         # If we don't have more actions, leave action mode
                         GameEngine.state = "GAMEPLAY"
@@ -311,10 +279,11 @@ class GameEngine:
 
         # We do this stuff after EVERY input
         # Update player location in the hud
-        self.player_info.update_location(self.player.location)
+        self.hud_container.get_hud("PLAYER_INFO_PANEL") \
+            .update_location(self.player.location)
 
         # Update inspection panel info
-        self.inspection_panel.inpsected_tile = self.map.tiles[
+        self.hud_container.get_hud("INSPECTION_PANEL").inpsected_tile = self.game_map.tiles[
             self.i_cursor.location[0]][
             self.i_cursor.location[1]]
 
@@ -327,13 +296,16 @@ class GameEngine:
         self.player = player.Player(constants.CAMERA_WIDTH_CELL // 2,
                                     constants.CAMERA_HEIGHT_CELL // 2)
         # Add player to objects list
-        self.objects.append(self.player)
+        self.object_container.append(self.player)
 
         # TEmp map generation
-        self.map.generate_forests(self.objects)
+        self.game_map.generate_forests(self.object_container)
 
         # First time update of player HUD and inspection cursor location
-        self.player_info.update_all_info(self.player, self.game_stats)
+        self.hud_container.get_hud("PLAYER_INFO_PANEL") \
+            .update_all_info(self.player, self.game_stats)
+
+        # Set cursor to player's location
         self.i_cursor.set_location(self.player.location)
 
         # First time fov compute
@@ -359,7 +331,11 @@ class GameEngine:
             self.handle_input(inputs)
 
             # Draw everything
-            self.draw()
+            self.renderer.render_all(
+                GameEngine.state,
+                self.game_map,
+                self.object_container,
+                self.hud_container)
 
             # Update the display
             pygame.display.update()

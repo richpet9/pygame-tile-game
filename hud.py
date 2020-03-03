@@ -127,6 +127,7 @@ class hud_NearbyActionsPanel(_hud):
         self.action_list = []
         self.active_action_index = -1
         self.header = self.font.render("Nearby Actions", False, WHITE)
+        self.rendered_text_buffer = pygame.Surface((width, height))
 
     def get_active_action(self):
         '''
@@ -163,12 +164,44 @@ class hud_NearbyActionsPanel(_hud):
             self.active_action_index = clamp(self.active_action_index,
                                              0,
                                              len(actions) - 1)
+            # Clear old buffer
+            self.rendered_text_buffer.fill(BLACK)
+
+            # Create the text render buffer
+            for key, action in enumerate(self.action_list):
+                color = GRAY
+                # Check if the current active action if the action we are rendering
+                if(self.active_action_index == key):
+                    color = RED
+
+                # Create the rendered text
+                rendered_string = self.font.render(str(key) + ' ' + action.text,
+                                                   False,
+                                                   color)
+
+                # Get X and Y Pos of this string
+                x_val = 16
+                y_val = ((key + 1) * (self.font.get_linesize() +
+                                      LINE_SPACING)) + (BORDER_WIDTH * 4)
+
+                # Blit this to the new buffer
+                self.rendered_text_buffer.blit(rendered_string, (x_val, y_val))
+
         else:
             # If it's empty, be sure to reset active_action_index to 0
             self.action_list = []
             self.active_action_index = 0
+            # Clear buffer
+            self.rendered_text_buffer.fill(BLACK)
+            # Render no actions to buffer
+            uh_oh = self.font.render("NO ACTIONS", False, WHITE)
+            # Render uh oh
+            self.rendered_text_buffer.blit(uh_oh,
+                                           (16,
+                                            (self.font.get_linesize() + LINE_SPACING) +
+                                            (BORDER_WIDTH * 4)))
 
-    def draw(self, surface_hud, gamestate):
+    def draw(self, surface_hud):
         '''
         Draw the action list HUD
         '''
@@ -176,11 +209,8 @@ class hud_NearbyActionsPanel(_hud):
         # Clear the surface
         self.surface.fill(BLACK)
 
-        # Draw a border
-        if(gamestate == "ACTIONS"):
-            self.draw_border(color=RED)
-        else:
-            self.draw_border()
+        # Draw the border
+        self.draw_border()
 
         # Draw header for HUD
         self.surface.blit(self.header, (
@@ -188,23 +218,8 @@ class hud_NearbyActionsPanel(_hud):
             BORDER_WIDTH
         ))
 
-        # Draw every action
-        for key, action in enumerate(self.action_list):
-            color = GRAY
-            # Check if the current active action if the action we are rendering
-            if(self.active_action_index == key and gamestate == "ACTIONS"):
-                color = RED
-
-            # TODO: Cache this render
-            rendered_string = self.font.render(str(key) + ' ' + action.text,
-                                               False,
-                                               color)
-
-            x_val = BORDER_WIDTH * 6
-            y_val = ((key + 1) * (self.font.get_linesize() +
-                                  LINE_SPACING)) + (BORDER_WIDTH * 4)
-
-            self.surface.blit(rendered_string, (x_val, y_val))
+        # Blit the buffer to the surface
+        self.surface.blit(self.rendered_text_buffer, (0, 0))
 
         # Blit this hud's surface to the main hud surface
         surface_hud.blit(self.surface,
@@ -331,3 +346,41 @@ class hud_PlayerInfoPanel(_hud):
                                             (BORDER_WIDTH * 4)))
         # Blit this hud's surface to the main hud surface
         surface_hud.blit(self.surface, (0, 0))
+
+
+class HUDContainer:
+    '''
+    Contains all the HUD elements
+    '''
+
+    def __init__(self):
+        self.hud_container = {}
+
+    def get_hud(self, hud_key):
+        '''
+        Get a hud from key
+        '''
+        return self.hud_container[hud_key]
+
+    def add_hud(self, hud_key, hud):
+        '''
+        Add a HUD tot he game
+        '''
+        # Type Check
+        if(not isinstance(hud, _hud)):
+            TypeError(
+                "Attempted to add non-hud object to HUDContainer: " + hud.__name__)
+
+        # Check if this HUD is already innit
+        if(self.hud_container.get(hud_key) is not None):
+            Warning("Attempted to overwrite HUD Key: " + hud_key)
+
+        # Add HUD
+        self.hud_container[hud_key] = hud
+
+    def draw_each(self, surface_hud):
+        '''
+        Render every HUD element
+        '''
+        for key in self.hud_container:
+            self.hud_container[key].draw(surface_hud)

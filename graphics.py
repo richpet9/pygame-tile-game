@@ -3,7 +3,7 @@ This module contains various classes and functions for graphics manipulation
 '''
 
 import pygame
-from constants import CELL_WIDTH, CELL_HEIGHT
+from constants import CELL_WIDTH, CELL_HEIGHT, DISPLAY_WIDTH
 
 
 class Sprite:
@@ -41,3 +41,55 @@ class SpriteLoader:
             "wood": Sprite("resources/sprites/wood.png"),
             "cursor": Sprite("resources/sprites/cursor.png")
         }
+
+
+class Renderer:
+    '''
+    Renders the game
+    '''
+
+    def __init__(self, surface_main, surface_map, surface_hud, camera):
+        self.surface_main = surface_main
+        self.surface_map = surface_map
+        self.surface_hud = surface_hud
+        self.camera = camera
+
+    def render_all(self, gamestate, game_map, object_container, hud_container):
+        '''
+        Render the entire game
+        '''
+
+        # Clear all surfaces with black
+        self.surface_main.fill(pygame.Color(0, 0, 0))
+        self.surface_map.fill(pygame.Color(0, 0, 0))
+        self.surface_hud.fill(pygame.Color(0, 0, 0, 0))
+
+        # Draw the map onto the surface map
+        game_map.draw(self.surface_map, self.camera)
+
+        # Draw the HUDs
+        hud_container.draw_each(self.surface_hud)
+
+        # Check if every object is visible, and draw the visible ones
+        for game_object in object_container:
+            if(game_map.tiles[game_object.location[0]][game_object.location[1]].visible):
+                game_object.draw(self.surface_map, self.camera)
+
+        # Check if we are in inspect mode, and show the cursor if so
+        if(gamestate in ("INSPECT", "ACTIONS")):
+            cursor = hud_container.get_hud("INSPECTION_PANEL").cursor
+
+            cell_location = (cursor.location[0] * CELL_WIDTH,
+                             cursor.location[1] * CELL_HEIGHT)
+
+            self.surface_map.blit(SpriteLoader.sprites.get("cursor").image[0],
+                                  (cell_location[0], cell_location[1]))
+
+        # Blit the surface map to the main surface
+        self.surface_main.blit(self.surface_map,
+                               ((DISPLAY_WIDTH // 5),
+                                0),
+                               self.camera.get_rect())
+
+        # Blit the surface hud to the main surface
+        self.surface_main.blit(self.surface_hud, (0, 0))
